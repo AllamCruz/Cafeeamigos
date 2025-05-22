@@ -14,6 +14,7 @@ export interface Database {
           id: string
           name: string
           order: number
+          parent_category_id: string | null
           created_at: string
           updated_at: string
         }
@@ -21,6 +22,7 @@ export interface Database {
           id?: string
           name: string
           order?: number
+          parent_category_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -28,6 +30,7 @@ export interface Database {
           id?: string
           name?: string
           order?: number
+          parent_category_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -71,6 +74,14 @@ export interface Database {
           is_most_requested?: boolean
           created_at?: string
           updated_at?: string
+        }
+      }
+    }
+    storage: {
+      Buckets: {
+        'menu-items': {
+          allowedMimeTypes: ['image/*']
+          maxFileSize: 5242880 // 5MB
         }
       }
     }

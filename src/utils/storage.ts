@@ -1,8 +1,44 @@
 import { supabase } from './supabase';
 import { MenuItem, Category } from '../types';
+import { v4 as uuidv4 } from 'uuid';
 
 export const initializeStorage = async (): Promise<void> => {
   // Migration is now handled through Supabase migrations
+};
+
+export const uploadImage = async (file: File): Promise<string> => {
+  const fileExt = file.name.split('.').pop();
+  const fileName = `${uuidv4()}.${fileExt}`;
+  const filePath = `${fileName}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from('menu-items')
+    .upload(filePath, file);
+
+  if (uploadError) {
+    console.error('Error uploading image:', uploadError);
+    throw uploadError;
+  }
+
+  const { data: { publicUrl } } = supabase.storage
+    .from('menu-items')
+    .getPublicUrl(filePath);
+
+  return publicUrl;
+};
+
+export const deleteImage = async (url: string): Promise<void> => {
+  const fileName = url.split('/').pop();
+  if (!fileName) return;
+
+  const { error } = await supabase.storage
+    .from('menu-items')
+    .remove([fileName]);
+
+  if (error) {
+    console.error('Error deleting image:', error);
+    throw error;
+  }
 };
 
 export const getMenuItems = async (): Promise<MenuItem[]> => {
@@ -37,10 +73,39 @@ export const getCategories = async (): Promise<Category[]> => {
     return [];
   }
 
-  return categories;
+  // Transform flat list into hierarchical structure
+  const categoryMap = new Map<string, Category>();
+  const rootCategories: Category[] = [];
+
+  categories.forEach(category => {
+    categoryMap.set(category.id, {
+      ...category,
+      parentCategoryId: category.parent_category_id,
+      subcategories: []
+    });
+  });
+
+  categoryMap.forEach(category => {
+    if (category.parentCategoryId) {
+      const parent = categoryMap.get(category.parentCategoryId);
+      if (parent) {
+        parent.subcategories?.push(category);
+      }
+    } else {
+      rootCategories.push(category);
+    }
+  });
+
+  return rootCategories;
 };
 
 export const addMenuItem = async (item: MenuItem): Promise<void> => {
+  let imageUrl = item.imageUrl;
+
+  if (item.imageFile) {
+    imageUrl = await uploadImage(item.imageFile);
+  }
+
   const { error } = await supabase
     .from('menu_items')
     .insert([{
@@ -48,7 +113,7 @@ export const addMenuItem = async (item: MenuItem): Promise<void> => {
       description: item.description,
       price: item.price,
       category_id: item.category,
-      image_url: item.imageUrl,
+      image_url: imageUrl,
       sizes: item.sizes || [],
       is_on_sale: item.isOnSale || false,
       is_most_requested: item.isMostRequested || false
@@ -61,6 +126,16 @@ export const addMenuItem = async (item: MenuItem): Promise<void> => {
 };
 
 export const updateMenuItem = async (item: MenuItem): Promise<void> => {
+  let imageUrl = item.imageUrl;
+
+  if (item.imageFile) {
+    // Delete old image if it exists
+    if (item.imageUrl) {
+      await deleteImage(item.imageUrl);
+    }
+    imageUrl = await uploadImage(item.imageFile);
+  }
+
   const { error } = await supabase
     .from('menu_items')
     .update({
@@ -68,7 +143,7 @@ export const updateMenuItem = async (item: MenuItem): Promise<void> => {
       description: item.description,
       price: item.price,
       category_id: item.category,
-      image_url: item.imageUrl,
+      image_url: imageUrl,
       sizes: item.sizes || [],
       is_on_sale: item.isOnSale || false,
       is_most_requested: item.isMostRequested || false
@@ -82,6 +157,17 @@ export const updateMenuItem = async (item: MenuItem): Promise<void> => {
 };
 
 export const deleteMenuItem = async (id: string): Promise<void> => {
+  // Get the item first to check for image
+  const { data: item } = await supabase
+    .from('menu_items')
+    .select('image_url')
+    .eq('id', id)
+    .single();
+
+  if (item?.image_url) {
+    await deleteImage(item.image_url);
+  }
+
   const { error } = await supabase
     .from('menu_items')
     .delete()
@@ -107,14 +193,14 @@ export const addCategory = async (category: Omit<Category, 'id'>): Promise<void>
       throw maxOrderError;
     }
 
-    // If no categories exist or maxOrder is null, start from 0
     const newOrder = maxOrderResult ? (maxOrderResult.order + 1) : 0;
 
     const { error: insertError } = await supabase
       .from('categories')
       .insert([{
         name: category.name,
-        order: newOrder
+        order: newOrder,
+        parent_category_id: category.parentCategoryId
       }]);
 
     if (insertError) {
@@ -131,7 +217,8 @@ export const updateCategory = async (category: Category): Promise<void> => {
   const { error } = await supabase
     .from('categories')
     .update({
-      name: category.name
+      name: category.name,
+      parent_category_id: category.parentCategoryId
     })
     .eq('id', category.id);
 
