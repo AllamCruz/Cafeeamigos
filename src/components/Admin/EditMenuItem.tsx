@@ -29,7 +29,7 @@ const EditMenuItem: React.FC<EditMenuItemProps> = ({
 }) => {
   const [formData, setFormData] = useState<MenuItem>(item || defaultMenuItem);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [newSize, setNewSize] = useState({ size: '', price: 0 });
+  const [newSize, setNewSize] = useState({ size: '', price: '' });
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -53,7 +53,8 @@ const EditMenuItem: React.FC<EditMenuItemProps> = ({
       const checked = (e.target as HTMLInputElement).checked;
       setFormData({ ...formData, [name]: checked });
     } else if (name === 'price') {
-      setFormData({ ...formData, [name]: parseFloat(value) || 0 });
+      const numValue = value === '' ? 0 : parseFloat(value);
+      setFormData({ ...formData, [name]: numValue });
     } else {
       setFormData({ ...formData, [name]: value });
     }
@@ -79,12 +80,15 @@ const EditMenuItem: React.FC<EditMenuItemProps> = ({
   };
 
   const handleAddSize = () => {
-    if (newSize.size && newSize.price > 0) {
-      setFormData({
-        ...formData,
-        sizes: [...(formData.sizes || []), newSize]
-      });
-      setNewSize({ size: '', price: 0 });
+    if (newSize.size && newSize.price !== '') {
+      const price = parseFloat(newSize.price);
+      if (!isNaN(price) && price >= 0) {
+        setFormData({
+          ...formData,
+          sizes: [...(formData.sizes || []), { size: newSize.size, price }]
+        });
+        setNewSize({ size: '', price: '' });
+      }
     }
   };
 
@@ -115,8 +119,9 @@ const EditMenuItem: React.FC<EditMenuItemProps> = ({
       newErrors.description = 'Descrição é obrigatória';
     }
     
-    if (formData.price <= 0) {
-      newErrors.price = 'Preço deve ser maior que zero';
+    // Only validate base price if no sizes are defined
+    if ((!formData.sizes || formData.sizes.length === 0) && formData.price <= 0) {
+      newErrors.price = 'Preço base é obrigatório quando não há tamanhos definidos';
     }
     
     if (!formData.category) {
@@ -191,9 +196,10 @@ const EditMenuItem: React.FC<EditMenuItemProps> = ({
               type="number"
               step="0.01"
               min="0"
-              value={formData.price}
+              value={formData.price || ''}
               onChange={handleChange}
               className={`w-full p-2 border ${errors.price ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-1 focus:ring-amber-500`}
+              placeholder="0.00"
             />
             {errors.price && <p className="mt-1 text-sm text-red-500">{errors.price}</p>}
           </div>
@@ -230,8 +236,8 @@ const EditMenuItem: React.FC<EditMenuItemProps> = ({
                 type="number"
                 step="0.01"
                 min="0"
-                value={newSize.price || ''}
-                onChange={(e) => setNewSize({ ...newSize, price: parseFloat(e.target.value) || 0 })}
+                value={newSize.price}
+                onChange={(e) => setNewSize({ ...newSize, price: e.target.value })}
                 placeholder="Preço"
                 className="w-24 p-2 border border-gray-300 rounded-md"
               />

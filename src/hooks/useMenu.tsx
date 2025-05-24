@@ -40,12 +40,36 @@ export const useMenu = () => {
     }
   };
 
-  const getMenuItemsByCategory = (categoryId: string) => {
-    return menuItems.filter(item => item.category === categoryId);
+  const getAllSubcategoryIds = (category: Category): string[] => {
+    let ids = [category.id];
+    if (category.subcategories) {
+      category.subcategories.forEach(subcat => {
+        ids = [...ids, ...getAllSubcategoryIds(subcat)];
+      });
+    }
+    return ids;
   };
 
-  const getCategoryById = (categoryId: string) => {
-    return categories.find(category => category.id === categoryId);
+  const getMenuItemsByCategory = (categoryId: string) => {
+    const category = categories.find(cat => cat.id === categoryId);
+    if (!category) return [];
+
+    const allCategoryIds = getAllSubcategoryIds(category);
+    return menuItems.filter(item => allCategoryIds.includes(item.category));
+  };
+
+  const getCategoryById = (categoryId: string): Category | undefined => {
+    const findInCategories = (cats: Category[]): Category | undefined => {
+      for (const cat of cats) {
+        if (cat.id === categoryId) return cat;
+        if (cat.subcategories) {
+          const found = findInCategories(cat.subcategories);
+          if (found) return found;
+        }
+      }
+      return undefined;
+    };
+    return findInCategories(categories);
   };
 
   const getCategoryName = (categoryId: string) => {
