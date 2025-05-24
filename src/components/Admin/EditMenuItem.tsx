@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MenuItem, Category } from '../../types';
-import { X, Plus, Trash } from 'lucide-react';
+import { X, Plus, Trash, Upload } from 'lucide-react';
 
 interface EditMenuItemProps {
   item?: MenuItem;
@@ -30,10 +30,15 @@ const EditMenuItem: React.FC<EditMenuItemProps> = ({
   const [formData, setFormData] = useState<MenuItem>(item || defaultMenuItem);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [newSize, setNewSize] = useState({ size: '', price: 0 });
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (item) {
       setFormData(item);
+      if (item.imageUrl) {
+        setImagePreview(item.imageUrl);
+      }
     } else {
       if (categories.length > 0) {
         setFormData({ ...defaultMenuItem, category: categories[0].id });
@@ -54,6 +59,25 @@ const EditMenuItem: React.FC<EditMenuItemProps> = ({
     }
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        setErrors({ ...errors, image: 'A imagem deve ter no máximo 5MB' });
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+
+      setFormData({ ...formData, imageFile: file });
+      setErrors({ ...errors, image: '' });
+    }
+  };
+
   const handleAddSize = () => {
     if (newSize.size && newSize.price > 0) {
       setFormData({
@@ -69,6 +93,15 @@ const EditMenuItem: React.FC<EditMenuItemProps> = ({
       ...formData,
       sizes: formData.sizes?.filter(s => s.size !== sizeToRemove) || []
     });
+  };
+
+  const renderCategoryOptions = (categories: Category[], level = 0): JSX.Element[] => {
+    return categories.flatMap(category => [
+      <option key={category.id} value={category.id}>
+        {'  '.repeat(level) + category.name}
+      </option>,
+      ...(category.subcategories ? renderCategoryOptions(category.subcategories, level + 1) : [])
+    ]);
   };
 
   const validate = (): boolean => {
@@ -224,28 +257,67 @@ const EditMenuItem: React.FC<EditMenuItemProps> = ({
               className={`w-full p-2 border ${errors.category ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-1 focus:ring-amber-500`}
             >
               <option value="">Selecionar categoria</option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
+              {renderCategoryOptions(categories)}
             </select>
             {errors.category && <p className="mt-1 text-sm text-red-500">{errors.category}</p>}
           </div>
           
           <div className="mb-4">
-            <label htmlFor="imageUrl" className="block text-sm font-medium text-gray-700 mb-1">
-              URL da Imagem (opcional)
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Imagem
             </label>
-            <input
-              id="imageUrl"
-              name="imageUrl"
-              type="text"
-              value={formData.imageUrl || ''}
-              onChange={handleChange}
-              className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-amber-500"
-              placeholder="https://exemplo.com/imagem.jpg"
-            />
+            <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+              <div className="space-y-1 text-center">
+                {imagePreview ? (
+                  <div className="relative">
+                    <img
+                      src={imagePreview}
+                      alt="Preview"
+                      className="mx-auto h-32 w-32 object-cover rounded-md"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setImagePreview(null);
+                        setFormData({ ...formData, imageUrl: '', imageFile: undefined });
+                        if (fileInputRef.current) {
+                          fileInputRef.current.value = '';
+                        }
+                      }}
+                      className="absolute top-0 right-0 -mr-2 -mt-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center">
+                    <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                    <div className="flex text-sm text-gray-600">
+                      <label
+                        htmlFor="image-upload"
+                        className="relative cursor-pointer bg-white rounded-md font-medium text-amber-600 hover:text-amber-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-amber-500"
+                      >
+                        <span>Carregar imagem</span>
+                        <input
+                          id="image-upload"
+                          name="image-upload"
+                          type="file"
+                          ref={fileInputRef}
+                          className="sr-only"
+                          accept="image/*"
+                          onChange={handleImageChange}
+                        />
+                      </label>
+                      <p className="pl-1">ou arraste e solte</p>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      PNG, JPG, GIF até 5MB
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+            {errors.image && <p className="mt-1 text-sm text-red-500">{errors.image}</p>}
           </div>
 
           <div className="mb-4 space-y-2">

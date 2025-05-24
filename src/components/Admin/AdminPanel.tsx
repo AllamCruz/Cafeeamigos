@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useMenu } from '../../hooks/useMenu';
 import { MenuItem, Category } from '../../types';
 import EditMenuItem from './EditMenuItem';
-import { Edit, Trash, Plus, Coffee, ArrowLeft, Check, X, GripVertical } from 'lucide-react';
+import { Edit, Trash, Plus, Coffee, ArrowLeft, Check, X, GripVertical, ChevronRight, ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
@@ -10,11 +10,20 @@ import { CSS } from '@dnd-kit/utilities';
 
 interface SortableCategoryProps {
   category: Category;
+  level?: number;
   onEdit: (category: Category) => void;
   onDelete: (id: string) => void;
+  onAddSubcategory: (parentId: string) => void;
 }
 
-const SortableCategory: React.FC<SortableCategoryProps> = ({ category, onEdit, onDelete }) => {
+const SortableCategory: React.FC<SortableCategoryProps> = ({ 
+  category, 
+  level = 0, 
+  onEdit, 
+  onDelete,
+  onAddSubcategory
+}) => {
+  const [isExpanded, setIsExpanded] = useState(true);
   const {
     attributes,
     listeners,
@@ -28,41 +37,69 @@ const SortableCategory: React.FC<SortableCategoryProps> = ({ category, onEdit, o
     transform: CSS.Transform.toString(transform),
     transition,
     zIndex: isDragging ? 1 : 0,
+    marginLeft: `${level * 1.5}rem`
   };
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={`bg-white border border-amber-100 rounded-lg p-3 shadow-sm flex justify-between items-center ${
-        isDragging ? 'opacity-50' : ''
-      }`}
-    >
-      <div className="flex items-center flex-1">
-        <button
-          className="p-1 text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing"
-          {...attributes}
-          {...listeners}
-        >
-          <GripVertical size={16} />
-        </button>
-        <span className="truncate ml-2">{category.name}</span>
+    <>
+      <div
+        ref={setNodeRef}
+        style={style}
+        className={`bg-white border border-amber-100 rounded-lg p-3 shadow-sm flex justify-between items-center mb-2 ${
+          isDragging ? 'opacity-50' : ''
+        }`}
+      >
+        <div className="flex items-center flex-1">
+          {category.subcategories && category.subcategories.length > 0 && (
+            <button
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="p-1 text-gray-400 hover:text-gray-600 mr-1"
+            >
+              {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+            </button>
+          )}
+          <button
+            className="p-1 text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing"
+            {...attributes}
+            {...listeners}
+          >
+            <GripVertical size={16} />
+          </button>
+          <span className="truncate ml-2">{category.name}</span>
+        </div>
+        <div className="flex items-center space-x-2 ml-2">
+          <button
+            onClick={() => onAddSubcategory(category.id)}
+            className="p-1.5 text-green-600 hover:text-green-700"
+            title="Add subcategory"
+          >
+            <Plus size={16} />
+          </button>
+          <button
+            onClick={() => onEdit(category)}
+            className="p-1.5 text-blue-600 hover:text-blue-700"
+          >
+            <Edit size={16} />
+          </button>
+          <button
+            onClick={() => onDelete(category.id)}
+            className="p-1.5 text-red-600 hover:text-red-700"
+          >
+            <Trash size={16} />
+          </button>
+        </div>
       </div>
-      <div className="flex items-center space-x-2 ml-2">
-        <button
-          onClick={() => onEdit(category)}
-          className="p-1.5 text-blue-600 hover:text-blue-700"
-        >
-          <Edit size={16} />
-        </button>
-        <button
-          onClick={() => onDelete(category.id)}
-          className="p-1.5 text-red-600 hover:text-red-700"
-        >
-          <Trash size={16} />
-        </button>
-      </div>
-    </div>
+      {isExpanded && category.subcategories && category.subcategories.map(subcategory => (
+        <SortableCategory
+          key={subcategory.id}
+          category={subcategory}
+          level={level + 1}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          onAddSubcategory={onAddSubcategory}
+        />
+      ))}
+    </>
   );
 };
 
@@ -85,7 +122,8 @@ const AdminPanel: React.FC = () => {
   const [isAddingItem, setIsAddingItem] = useState(false);
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
-  const [editingCategory, setEditingCategory] = useState<{ id: string, name: string } | null>(null);
+  const [selectedParentCategory, setSelectedParentCategory] = useState<string>('');
+  const [editingCategory, setEditingCategory] = useState<{ id: string, name: string, parentCategoryId?: string | null } | null>(null);
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
 
   const sensors = useSensors(
@@ -137,19 +175,36 @@ const AdminPanel: React.FC = () => {
 
   const handleAddCategory = () => {
     if (newCategoryName.trim()) {
-      addCategory({ name: newCategoryName.trim() });
+      addCategory({ 
+        name: newCategoryName.trim(),
+        parentCategoryId: selectedParentCategory || null
+      });
       setNewCategoryName('');
+      setSelectedParentCategory('');
       setIsAddingCategory(false);
     }
   };
 
+  const handleAddSubcategory = (parentId: string) => {
+    setSelectedParentCategory(parentId);
+    setIsAddingCategory(true);
+  };
+
   const handleEditCategory = (category: Category) => {
-    setEditingCategory({ id: category.id, name: category.name });
+    setEditingCategory({ 
+      id: category.id, 
+      name: category.name,
+      parentCategoryId: category.parentCategoryId
+    });
   };
 
   const handleSaveCategory = () => {
     if (editingCategory && editingCategory.name.trim()) {
-      updateCategory({ id: editingCategory.id, name: editingCategory.name.trim() });
+      updateCategory({ 
+        id: editingCategory.id, 
+        name: editingCategory.name.trim(),
+        parentCategoryId: editingCategory.parentCategoryId
+      });
       setEditingCategory(null);
     }
   };
@@ -162,6 +217,15 @@ const AdminPanel: React.FC = () => {
 
   const getItemsByCategory = (categoryId: string) => {
     return menuItems.filter(item => item.category === categoryId);
+  };
+
+  const renderCategoryOptions = (categories: Category[], level = 0): JSX.Element[] => {
+    return categories.flatMap(category => [
+      <option key={category.id} value={category.id}>
+        {'  '.repeat(level) + category.name}
+      </option>,
+      ...(category.subcategories ? renderCategoryOptions(category.subcategories, level + 1) : [])
+    ]);
   };
 
   return (
@@ -188,13 +252,25 @@ const AdminPanel: React.FC = () => {
           
           {isAddingCategory ? (
             <div className="flex items-center space-x-2 w-full sm:w-auto">
-              <input
-                type="text"
-                value={newCategoryName}
-                onChange={(e) => setNewCategoryName(e.target.value)}
-                className="p-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-amber-500 flex-1"
-                placeholder="Nome da categoria"
-              />
+              <div className="flex-1">
+                <input
+                  type="text"
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  className="p-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-amber-500 w-full"
+                  placeholder="Nome da categoria"
+                />
+                {selectedParentCategory && (
+                  <select
+                    value={selectedParentCategory}
+                    onChange={(e) => setSelectedParentCategory(e.target.value)}
+                    className="mt-2 p-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-amber-500 w-full"
+                  >
+                    <option value="">Selecione a categoria pai</option>
+                    {renderCategoryOptions(categories)}
+                  </select>
+                )}
+              </div>
               <button
                 onClick={handleAddCategory}
                 className="px-2 py-1.5 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm whitespace-nowrap"
@@ -202,7 +278,10 @@ const AdminPanel: React.FC = () => {
                 Salvar
               </button>
               <button
-                onClick={() => setIsAddingCategory(false)}
+                onClick={() => {
+                  setIsAddingCategory(false);
+                  setSelectedParentCategory('');
+                }}
                 className="px-2 py-1.5 border border-gray-300 rounded-md hover:bg-gray-50 text-sm"
               >
                 Cancelar
@@ -228,13 +307,14 @@ const AdminPanel: React.FC = () => {
             items={categories.map(cat => cat.id)}
             strategy={verticalListSortingStrategy}
           >
-            <div className="grid grid-cols-1 gap-3">
+            <div className="space-y-2">
               {categories.map((category) => (
                 <SortableCategory
                   key={category.id}
                   category={category}
                   onEdit={handleEditCategory}
                   onDelete={handleDeleteCategory}
+                  onAddSubcategory={handleAddSubcategory}
                 />
               ))}
             </div>
