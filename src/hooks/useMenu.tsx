@@ -50,12 +50,17 @@ export const useMenu = () => {
     return ids;
   };
 
-  const getMenuItemsByCategory = (categoryId: string) => {
+  const getMenuItemsByCategory = (categoryId: string, includeSubcategories: boolean = true) => {
     const category = categories.find(cat => cat.id === categoryId);
     if (!category) return [];
 
-    const allCategoryIds = getAllSubcategoryIds(category);
-    return menuItems.filter(item => allCategoryIds.includes(item.category));
+    if (includeSubcategories) {
+      const allCategoryIds = getAllSubcategoryIds(category);
+      return menuItems.filter(item => allCategoryIds.includes(item.category));
+    } else {
+      // Only return items directly in this category
+      return menuItems.filter(item => item.category === categoryId);
+    }
   };
 
   const getCategoryById = (categoryId: string): Category | undefined => {

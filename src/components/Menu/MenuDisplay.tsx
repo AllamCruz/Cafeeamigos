@@ -22,6 +22,34 @@ const MenuDisplay: React.FC = () => {
     }
   };
 
+  const renderCategoryContent = (categoryId: string) => {
+    const category = categories.find(c => c.id === categoryId);
+    if (!category) return null;
+
+    const mainItems = getMenuItemsByCategory(categoryId, false);
+    const subcategoryContent = category.subcategories?.map(subcat => (
+      <MenuCategory
+        key={subcat.id}
+        categoryName={subcat.name}
+        items={getMenuItemsByCategory(subcat.id, true)}
+        isSubcategory={true}
+      />
+    ));
+
+    return (
+      <>
+        {mainItems.length > 0 && (
+          <MenuCategory
+            categoryName={category.name}
+            items={mainItems}
+            isSubcategory={false}
+          />
+        )}
+        {subcategoryContent}
+      </>
+    );
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="relative mb-8">
@@ -60,12 +88,7 @@ const MenuDisplay: React.FC = () => {
         </button>
       </div>
 
-      {selectedCategory && (
-        <MenuCategory 
-          categoryName={categories.find(c => c.id === selectedCategory)?.name || ''}
-          items={getMenuItemsByCategory(selectedCategory)}
-        />
-      )}
+      {selectedCategory && renderCategoryContent(selectedCategory)}
     </div>
   );
 };
