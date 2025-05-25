@@ -14,6 +14,7 @@ interface SortableCategoryProps {
   onEdit: (category: Category) => void;
   onDelete: (id: string) => void;
   onAddSubcategory: (parentId: string) => void;
+  items: MenuItem[];
 }
 
 const SortableCategory: React.FC<SortableCategoryProps> = ({ 
@@ -21,7 +22,8 @@ const SortableCategory: React.FC<SortableCategoryProps> = ({
   level = 0, 
   onEdit, 
   onDelete,
-  onAddSubcategory
+  onAddSubcategory,
+  items
 }) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const {
@@ -66,6 +68,7 @@ const SortableCategory: React.FC<SortableCategoryProps> = ({
             <GripVertical size={16} />
           </button>
           <span className="truncate ml-2">{category.name}</span>
+          <span className="ml-2 text-xs text-gray-500">({items.length} items)</span>
         </div>
         <div className="flex items-center space-x-2 ml-2">
           <button
@@ -89,16 +92,96 @@ const SortableCategory: React.FC<SortableCategoryProps> = ({
           </button>
         </div>
       </div>
-      {isExpanded && category.subcategories && category.subcategories.map(subcategory => (
-        <SortableCategory
-          key={subcategory.id}
-          category={subcategory}
-          level={level + 1}
-          onEdit={onEdit}
-          onDelete={onDelete}
-          onAddSubcategory={onAddSubcategory}
-        />
-      ))}
+      {isExpanded && (
+        <>
+          {/* Display items in this category */}
+          {items.length > 0 && (
+            <div className="ml-6 mb-2">
+              <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Nome
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
+                        Descrição
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Preço Base
+                      </th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Ações
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {items.map((item) => (
+                      <tr key={item.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            {item.imageUrl && (
+                              <img 
+                                src={item.imageUrl} 
+                                alt={item.name} 
+                                className="h-10 w-10 rounded-full mr-3 object-cover"
+                              />
+                            )}
+                            <div className="text-sm font-medium text-gray-900 truncate max-w-[120px] sm:max-w-none">
+                              {item.name}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-4 hidden md:table-cell">
+                          <div className="text-sm text-gray-500 truncate max-w-[200px] lg:max-w-[300px]">
+                            {item.description}
+                          </div>
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">
+                            {item.sizes && item.sizes.length > 0 
+                              ? `${item.sizes.length} tamanhos`
+                              : `R$ ${item.price.toFixed(2)}`
+                            }
+                          </div>
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <div className="flex items-center justify-end space-x-2">
+                            <button
+                              onClick={() => handleEditItem(item)}
+                              className="p-1.5 text-indigo-600 hover:text-indigo-900"
+                            >
+                              <Edit size={16} />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteItem(item.id)}
+                              className="p-1.5 text-red-600 hover:text-red-900"
+                            >
+                              <Trash size={16} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+          {/* Render subcategories recursively */}
+          {category.subcategories?.map(subcat => (
+            <SortableCategory
+              key={subcat.id}
+              category={subcat}
+              level={level + 1}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              onAddSubcategory={onAddSubcategory}
+              items={getItemsByCategory(subcat.id)}
+            />
+          ))}
+        </>
+      )}
     </>
   );
 };
@@ -124,7 +207,6 @@ const AdminPanel: React.FC = () => {
   const [newCategoryName, setNewCategoryName] = useState('');
   const [selectedParentCategory, setSelectedParentCategory] = useState<string>('');
   const [editingCategory, setEditingCategory] = useState<{ id: string, name: string, parentCategoryId?: string | null } | null>(null);
-  const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -315,6 +397,7 @@ const AdminPanel: React.FC = () => {
                   onEdit={handleEditCategory}
                   onDelete={handleDeleteCategory}
                   onAddSubcategory={handleAddSubcategory}
+                  items={getItemsByCategory(category.id)}
                 />
               ))}
             </div>
@@ -322,104 +405,15 @@ const AdminPanel: React.FC = () => {
         </DndContext>
       </div>
 
-      <div>
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-4">
-          <h2 className="text-xl font-serif text-[#5c3d2e]">Itens do Cardápio</h2>
-          <button
-            onClick={handleAddItem}
-            className="flex items-center space-x-1 px-3 py-1.5 bg-[#5c3d2e] text-white rounded-md hover:bg-amber-800 text-sm w-full sm:w-auto justify-center"
-          >
-            <Plus size={16} />
-            <span>Novo Item</span>
-          </button>
-        </div>
-
-        <div className="space-y-6">
-          {categories.map((category) => {
-            const categoryItems = getItemsByCategory(category.id);
-            
-            if (categoryItems.length === 0) return null;
-            
-            return (
-              <div key={category.id} className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
-                <button
-                  onClick={() => setExpandedCategory(expandedCategory === category.id ? null : category.id)}
-                  className="w-full px-4 py-3 bg-gray-50 flex justify-between items-center hover:bg-gray-100"
-                >
-                  <h3 className="font-medium text-gray-700">{category.name}</h3>
-                  <span className="text-sm text-gray-500">{categoryItems.length} itens</span>
-                </button>
-                
-                {expandedCategory === category.id && (
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Nome
-                          </th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
-                            Descrição
-                          </th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Preço Base
-                          </th>
-                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Ações
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        {categoryItems.map((item) => (
-                          <tr key={item.id} className="hover:bg-gray-50">
-                            <td className="px-4 py-4 whitespace-nowrap">
-                              <div className="flex items-center">
-                                {item.imageUrl && (
-                                  <img 
-                                    src={item.imageUrl} 
-                                    alt={item.name} 
-                                    className="h-10 w-10 rounded-full mr-3 object-cover"
-                                  />
-                                )}
-                                <div className="text-sm font-medium text-gray-900 truncate max-w-[120px] sm:max-w-none">
-                                  {item.name}
-                                </div>
-                              </div>
-                            </td>
-                            <td className="px-4 py-4 hidden md:table-cell">
-                              <div className="text-sm text-gray-500 truncate max-w-[200px] lg:max-w-[300px]">
-                                {item.description}
-                              </div>
-                            </td>
-                            <td className="px-4 py-4 whitespace-nowrap">
-                              <div className="text-sm text-gray-900">R$ {item.price.toFixed(2)}</div>
-                            </td>
-                            <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
-                              <div className="flex items-center justify-end space-x-2">
-                                <button
-                                  onClick={() => handleEditItem(item)}
-                                  className="p-1.5 text-indigo-600 hover:text-indigo-900"
-                                >
-                                  <Edit size={16} />
-                                </button>
-                                <button
-                                  onClick={() => handleDeleteItem(item.id)}
-                                  className="p-1.5 text-red-600 hover:text-red-900"
-                                >
-                                  <Trash size={16} />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-serif text-[#5c3d2e]">Itens do Cardápio</h2>
+        <button
+          onClick={handleAddItem}
+          className="flex items-center space-x-1 px-3 py-1.5 bg-[#5c3d2e] text-white rounded-md hover:bg-amber-800 text-sm"
+        >
+          <Plus size={16} />
+          <span>Novo Item</span>
+        </button>
       </div>
 
       {isAddingItem && (

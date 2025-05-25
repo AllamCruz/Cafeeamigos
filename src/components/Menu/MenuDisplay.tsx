@@ -9,7 +9,6 @@ const MenuDisplay: React.FC = () => {
   const containerRef = React.useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Set the first category as selected when categories are loaded
     if (categories.length > 0 && !selectedCategory) {
       setSelectedCategory(categories[0].id);
     }
@@ -26,18 +25,12 @@ const MenuDisplay: React.FC = () => {
     const category = categories.find(c => c.id === categoryId);
     if (!category) return null;
 
+    // Get items that belong directly to this category (not including subcategories)
     const mainItems = getMenuItemsByCategory(categoryId, false);
-    const subcategoryContent = category.subcategories?.map(subcat => (
-      <MenuCategory
-        key={subcat.id}
-        categoryName={subcat.name}
-        items={getMenuItemsByCategory(subcat.id, true)}
-        isSubcategory={true}
-      />
-    ));
 
     return (
-      <>
+      <div className="space-y-8">
+        {/* Render main category items if any exist */}
         {mainItems.length > 0 && (
           <MenuCategory
             categoryName={category.name}
@@ -45,8 +38,22 @@ const MenuDisplay: React.FC = () => {
             isSubcategory={false}
           />
         )}
-        {subcategoryContent}
-      </>
+
+        {/* Render each subcategory and its items */}
+        {category.subcategories?.map(subcat => {
+          const subcategoryItems = getMenuItemsByCategory(subcat.id, false);
+          if (subcategoryItems.length === 0) return null;
+
+          return (
+            <MenuCategory
+              key={subcat.id}
+              categoryName={subcat.name}
+              items={subcategoryItems}
+              isSubcategory={true}
+            />
+          );
+        })}
+      </div>
     );
   };
 
