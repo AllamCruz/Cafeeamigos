@@ -4,7 +4,7 @@ import { useMenu } from '../../hooks/useMenu';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const MenuDisplay: React.FC = () => {
-  const { categories, getMenuItemsByCategory, getParentCategories, getSubcategories } = useMenu();
+  const { categories, getMenuItemsByCategory, getParentCategories, getSubcategories, getCategoryName } = useMenu();
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const containerRef = React.useRef<HTMLDivElement>(null);
   const parentCategories = getParentCategories();
@@ -31,16 +31,14 @@ const MenuDisplay: React.FC = () => {
 
     return (
       <div className="space-y-8">
-        {/* Render main category items if any exist */}
-        {mainItems.length > 0 && (
-          <MenuCategory
-            categoryName={category.name}
-            items={mainItems}
-            isSubcategory={false}
-          />
-        )}
+        {/* Render main category items */}
+        <MenuCategory
+          categoryName={category.name}
+          items={mainItems}
+          isSubcategory={false}
+        />
 
-        {/* Render subcategories */}
+        {/* Render subcategories and their items */}
         {subcategories.map(subcat => {
           const subcategoryItems = getMenuItemsByCategory(subcat.id, false);
           if (subcategoryItems.length === 0) return null;
