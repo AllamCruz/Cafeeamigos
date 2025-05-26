@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { useMenu } from '../../hooks/useMenu';
 import { MenuItem, Category } from '../../types';
 import EditMenuItem from './EditMenuItem';
@@ -15,6 +15,7 @@ interface SortableCategoryProps {
   onDelete: (id: string) => void;
   onAddSubcategory: (parentId: string) => void;
   items: MenuItem[];
+  subcategories: Category[];
 }
 
 const SortableCategory: React.FC<SortableCategoryProps> = ({ 
@@ -23,7 +24,8 @@ const SortableCategory: React.FC<SortableCategoryProps> = ({
   onEdit, 
   onDelete,
   onAddSubcategory,
-  items
+  items,
+  subcategories
 }) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const {
@@ -52,7 +54,7 @@ const SortableCategory: React.FC<SortableCategoryProps> = ({
         }`}
       >
         <div className="flex items-center flex-1">
-          {category.subcategories && category.subcategories.length > 0 && (
+          {(subcategories.length > 0 || items.length > 0) && (
             <button
               onClick={() => setIsExpanded(!isExpanded)}
               className="p-1 text-gray-400 hover:text-gray-600 mr-1"
@@ -68,7 +70,9 @@ const SortableCategory: React.FC<SortableCategoryProps> = ({
             <GripVertical size={16} />
           </button>
           <span className="truncate ml-2">{category.name}</span>
-          <span className="ml-2 text-xs text-gray-500">({items.length} items)</span>
+          <span className="ml-2 text-xs text-gray-500">
+            ({items.length} items, {subcategories.length} subcategorias)
+          </span>
         </div>
         <div className="flex items-center space-x-2 ml-2">
           <button
@@ -92,6 +96,7 @@ const SortableCategory: React.FC<SortableCategoryProps> = ({
           </button>
         </div>
       </div>
+
       {isExpanded && (
         <>
           {/* Display items in this category */}
@@ -168,8 +173,9 @@ const SortableCategory: React.FC<SortableCategoryProps> = ({
               </div>
             </div>
           )}
+
           {/* Render subcategories recursively */}
-          {category.subcategories?.map(subcat => (
+          {subcategories.map(subcat => (
             <SortableCategory
               key={subcat.id}
               category={subcat}
@@ -178,6 +184,7 @@ const SortableCategory: React.FC<SortableCategoryProps> = ({
               onDelete={onDelete}
               onAddSubcategory={onAddSubcategory}
               items={getItemsByCategory(subcat.id)}
+              subcategories={getSubcategories(subcat.id)}
             />
           ))}
         </>
@@ -191,6 +198,9 @@ const AdminPanel: React.FC = () => {
     menuItems,
     categories,
     getCategoryName,
+    getParentCategories,
+    getSubcategories,
+    getMenuItemsByCategory,
     addMenuItem,
     updateMenuItem,
     deleteMenuItem,
@@ -298,7 +308,7 @@ const AdminPanel: React.FC = () => {
   };
 
   const getItemsByCategory = (categoryId: string) => {
-    return menuItems.filter(item => item.category === categoryId);
+    return getMenuItemsByCategory(categoryId, false);
   };
 
   const renderCategoryOptions = (categories: Category[], level = 0): JSX.Element[] => {
@@ -306,9 +316,11 @@ const AdminPanel: React.FC = () => {
       <option key={category.id} value={category.id}>
         {'  '.repeat(level) + category.name}
       </option>,
-      ...(category.subcategories ? renderCategoryOptions(category.subcategories, level + 1) : [])
+      ...renderCategoryOptions(getSubcategories(category.id), level + 1)
     ]);
   };
+
+  const parentCategories = getParentCategories();
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -349,7 +361,7 @@ const AdminPanel: React.FC = () => {
                     className="mt-2 p-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-amber-500 w-full"
                   >
                     <option value="">Selecione a categoria pai</option>
-                    {renderCategoryOptions(categories)}
+                    {renderCategoryOptions(parentCategories)}
                   </select>
                 )}
               </div>
@@ -386,11 +398,11 @@ const AdminPanel: React.FC = () => {
           onDragEnd={handleDragEnd}
         >
           <SortableContext
-            items={categories.map(cat => cat.id)}
+            items={parentCategories.map(cat => cat.id)}
             strategy={verticalListSortingStrategy}
           >
             <div className="space-y-2">
-              {categories.map((category) => (
+              {parentCategories.map((category) => (
                 <SortableCategory
                   key={category.id}
                   category={category}
@@ -398,6 +410,7 @@ const AdminPanel: React.FC = () => {
                   onDelete={handleDeleteCategory}
                   onAddSubcategory={handleAddSubcategory}
                   items={getItemsByCategory(category.id)}
+                  subcategories={getSubcategories(category.id)}
                 />
               ))}
             </div>

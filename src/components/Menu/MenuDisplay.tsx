@@ -4,15 +4,16 @@ import { useMenu } from '../../hooks/useMenu';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const MenuDisplay: React.FC = () => {
-  const { categories, getMenuItemsByCategory } = useMenu();
+  const { categories, getMenuItemsByCategory, getParentCategories, getSubcategories } = useMenu();
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const containerRef = React.useRef<HTMLDivElement>(null);
+  const parentCategories = getParentCategories();
 
   useEffect(() => {
-    if (categories.length > 0 && !selectedCategory) {
-      setSelectedCategory(categories[0].id);
+    if (parentCategories.length > 0 && !selectedCategory) {
+      setSelectedCategory(parentCategories[0].id);
     }
-  }, [categories, selectedCategory]);
+  }, [parentCategories, selectedCategory]);
 
   const scrollCategories = (direction: 'left' | 'right') => {
     if (containerRef.current) {
@@ -25,8 +26,8 @@ const MenuDisplay: React.FC = () => {
     const category = categories.find(c => c.id === categoryId);
     if (!category) return null;
 
-    // Get items that belong directly to this category (not including subcategories)
     const mainItems = getMenuItemsByCategory(categoryId, false);
+    const subcategories = getSubcategories(categoryId);
 
     return (
       <div className="space-y-8">
@@ -39,8 +40,8 @@ const MenuDisplay: React.FC = () => {
           />
         )}
 
-        {/* Render each subcategory and its items */}
-        {category.subcategories?.map(subcat => {
+        {/* Render subcategories */}
+        {subcategories.map(subcat => {
           const subcategoryItems = getMenuItemsByCategory(subcat.id, false);
           if (subcategoryItems.length === 0) return null;
 
@@ -72,7 +73,7 @@ const MenuDisplay: React.FC = () => {
           className="flex overflow-x-auto gap-4 pb-4 px-1 scrollbar-hide"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
-          {categories.map((category) => (
+          {parentCategories.map((category) => (
             <button
               key={category.id}
               onClick={() => setSelectedCategory(category.id)}

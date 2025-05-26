@@ -40,44 +40,47 @@ export const useMenu = () => {
     }
   };
 
-  const getAllSubcategoryIds = (category: Category): string[] => {
-    let ids = [category.id];
-    if (category.subcategories) {
-      category.subcategories.forEach(subcat => {
-        ids = [...ids, ...getAllSubcategoryIds(subcat)];
+  const getAllSubcategoryIds = (categoryId: string): string[] => {
+    const findSubcategoryIds = (catId: string, acc: string[] = []): string[] => {
+      const category = categories.find(c => c.id === catId);
+      if (!category) return acc;
+
+      acc.push(category.id);
+      
+      // Find all direct subcategories
+      const subcategories = categories.filter(c => c.parentCategoryId === category.id);
+      subcategories.forEach(subcat => {
+        findSubcategoryIds(subcat.id, acc);
       });
-    }
-    return ids;
+
+      return acc;
+    };
+
+    return findSubcategoryIds(categoryId);
   };
 
-  const getMenuItemsByCategory = (categoryId: string, includeSubcategories: boolean = true) => {
-    const category = categories.find(cat => cat.id === categoryId);
-    if (!category) return [];
-
-    if (includeSubcategories) {
-      const allCategoryIds = getAllSubcategoryIds(category);
-      return menuItems.filter(item => allCategoryIds.includes(item.category));
-    } else {
-      // Only return items directly in this category
+  const getMenuItemsByCategory = (categoryId: string, includeSubcategories: boolean = true): MenuItem[] => {
+    if (!includeSubcategories) {
       return menuItems.filter(item => item.category === categoryId);
     }
+
+    const categoryIds = getAllSubcategoryIds(categoryId);
+    return menuItems.filter(item => categoryIds.includes(item.category));
   };
 
   const getCategoryById = (categoryId: string): Category | undefined => {
-    const findInCategories = (cats: Category[]): Category | undefined => {
-      for (const cat of cats) {
-        if (cat.id === categoryId) return cat;
-        if (cat.subcategories) {
-          const found = findInCategories(cat.subcategories);
-          if (found) return found;
-        }
-      }
-      return undefined;
-    };
-    return findInCategories(categories);
+    return categories.find(cat => cat.id === categoryId);
   };
 
-  const getCategoryName = (categoryId: string) => {
+  const getParentCategories = (): Category[] => {
+    return categories.filter(cat => !cat.parentCategoryId);
+  };
+
+  const getSubcategories = (parentId: string): Category[] => {
+    return categories.filter(cat => cat.parentCategoryId === parentId);
+  };
+
+  const getCategoryName = (categoryId: string): string => {
     const category = getCategoryById(categoryId);
     return category ? category.name : '';
   };
@@ -152,7 +155,7 @@ export const useMenu = () => {
     }
   };
 
-  const handleReorderCategories = async (newCategories: Category[]) => {
+  const handleReorderCategories = async (newCategories: Category[]): Promise<void> => {
     try {
       await reorderCategoriesStorage(newCategories);
       setCategories(newCategories);
@@ -169,6 +172,8 @@ export const useMenu = () => {
     error,
     getMenuItemsByCategory,
     getCategoryById,
+    getParentCategories,
+    getSubcategories,
     getCategoryName,
     addMenuItem: handleAddMenuItem,
     updateMenuItem: handleUpdateMenuItem,
