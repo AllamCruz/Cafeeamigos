@@ -14,6 +14,8 @@ interface SortableCategoryProps {
   onEdit: (category: Category) => void;
   onDelete: (id: string) => void;
   onAddSubcategory: (parentId: string) => void;
+  onEditItem: (item: MenuItem) => void;
+  onDeleteItem: (id: string) => void;
   items: MenuItem[];
   subcategories: Category[];
 }
@@ -24,6 +26,8 @@ const SortableCategory: React.FC<SortableCategoryProps> = ({
   onEdit, 
   onDelete,
   onAddSubcategory,
+  onEditItem,
+  onDeleteItem,
   items,
   subcategories
 }) => {
@@ -153,13 +157,13 @@ const SortableCategory: React.FC<SortableCategoryProps> = ({
                         <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <div className="flex items-center justify-end space-x-2">
                             <button
-                              onClick={() => handleEditItem(item)}
+                              onClick={() => onEditItem(item)}
                               className="p-1.5 text-indigo-600 hover:text-indigo-900"
                             >
                               <Edit size={16} />
                             </button>
                             <button
-                              onClick={() => handleDeleteItem(item.id)}
+                              onClick={() => onDeleteItem(item.id)}
                               className="p-1.5 text-red-600 hover:text-red-900"
                             >
                               <Trash size={16} />
@@ -183,6 +187,8 @@ const SortableCategory: React.FC<SortableCategoryProps> = ({
               onEdit={onEdit}
               onDelete={onDelete}
               onAddSubcategory={onAddSubcategory}
+              onEditItem={onEditItem}
+              onDeleteItem={onDeleteItem}
               items={getItemsByCategory(subcat.id)}
               subcategories={getSubcategories(subcat.id)}
             />
@@ -409,6 +415,8 @@ const AdminPanel: React.FC = () => {
                   onEdit={handleEditCategory}
                   onDelete={handleDeleteCategory}
                   onAddSubcategory={handleAddSubcategory}
+                  onEditItem={handleEditItem}
+                  onDeleteItem={handleDeleteItem}
                   items={getItemsByCategory(category.id)}
                   subcategories={getSubcategories(category.id)}
                 />
