@@ -40,44 +40,16 @@ export const useMenu = () => {
     }
   };
 
-  const getAllSubcategoryIds = (categoryId: string): string[] => {
-    const findSubcategoryIds = (catId: string, acc: string[] = []): string[] => {
-      const category = categories.find(c => c.id === catId);
-      if (!category) return acc;
-
-      acc.push(category.id);
-      
-      // Find all direct subcategories
-      const subcategories = categories.filter(c => c.parentCategoryId === category.id);
-      subcategories.forEach(subcat => {
-        findSubcategoryIds(subcat.id, acc);
-      });
-
-      return acc;
-    };
-
-    return findSubcategoryIds(categoryId);
-  };
-
-  const getMenuItemsByCategory = (categoryId: string, includeSubcategories: boolean = true): MenuItem[] => {
-    if (!includeSubcategories) {
-      return menuItems.filter(item => item.category === categoryId);
-    }
-
-    const categoryIds = getAllSubcategoryIds(categoryId);
-    return menuItems.filter(item => categoryIds.includes(item.category));
+  const getMenuItemsByCategory = (categoryId: string): MenuItem[] => {
+    return menuItems.filter(item => item.category === categoryId);
   };
 
   const getCategoryById = (categoryId: string): Category | undefined => {
     return categories.find(cat => cat.id === categoryId);
   };
 
-  const getParentCategories = (): Category[] => {
-    return categories.filter(cat => !cat.parentCategoryId);
-  };
-
-  const getSubcategories = (parentId: string): Category[] => {
-    return categories.filter(cat => cat.parentCategoryId === parentId);
+  const getAllCategories = (): Category[] => {
+    return categories;
   };
 
   const getCategoryName = (categoryId: string): string => {
@@ -172,8 +144,7 @@ export const useMenu = () => {
     error,
     getMenuItemsByCategory,
     getCategoryById,
-    getParentCategories,
-    getSubcategories,
+    getAllCategories,
     getCategoryName,
     addMenuItem: handleAddMenuItem,
     updateMenuItem: handleUpdateMenuItem,

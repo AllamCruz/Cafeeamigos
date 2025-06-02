@@ -6,10 +6,9 @@ import { MenuItem as MenuItemType } from '../../types';
 interface MenuCategoryProps {
   categoryName: string;
   items: MenuItemType[];
-  isSubcategory?: boolean;
 }
 
-const MenuCategory: React.FC<MenuCategoryProps> = ({ categoryName, items, isSubcategory = false }) => {
+const MenuCategory: React.FC<MenuCategoryProps> = ({ categoryName, items }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const scrollLeft = () => {
@@ -27,11 +26,11 @@ const MenuCategory: React.FC<MenuCategoryProps> = ({ categoryName, items, isSubc
   if (items.length === 0) return null;
 
   return (
-    <div className={`mb-10 ${isSubcategory ? 'pl-6 border-l-2 border-amber-200' : ''}`}>
+    <div className="mb-10">
       <div className="flex items-center mb-4">
-        <h2 className={`${isSubcategory ? 'text-xl' : 'text-2xl'} font-serif text-[#5c3d2e] relative`}>
+        <h2 className="text-2xl font-serif text-[#5c3d2e] relative">
           {categoryName}
-          <span className={`absolute -bottom-1 left-0 h-0.5 bg-amber-500 ${isSubcategory ? 'w-1/3' : 'w-1/2'}`}></span>
+          <span className="absolute -bottom-1 left-0 h-0.5 bg-amber-500 w-1/2"></span>
         </h2>
       </div>
       

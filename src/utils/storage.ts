@@ -73,30 +73,7 @@ export const getCategories = async (): Promise<Category[]> => {
     return [];
   }
 
-  // Transform flat list into hierarchical structure
-  const categoryMap = new Map<string, Category>();
-  const rootCategories: Category[] = [];
-
-  categories.forEach(category => {
-    categoryMap.set(category.id, {
-      ...category,
-      parentCategoryId: category.parent_category_id,
-      subcategories: []
-    });
-  });
-
-  categoryMap.forEach(category => {
-    if (category.parentCategoryId) {
-      const parent = categoryMap.get(category.parentCategoryId);
-      if (parent) {
-        parent.subcategories?.push(category);
-      }
-    } else {
-      rootCategories.push(category);
-    }
-  });
-
-  return rootCategories;
+  return categories;
 };
 
 export const addMenuItem = async (item: MenuItem): Promise<void> => {
@@ -199,8 +176,7 @@ export const addCategory = async (category: Omit<Category, 'id'>): Promise<void>
       .from('categories')
       .insert([{
         name: category.name,
-        order: newOrder,
-        parent_category_id: category.parentCategoryId
+        order: newOrder
       }]);
 
     if (insertError) {
@@ -217,8 +193,7 @@ export const updateCategory = async (category: Category): Promise<void> => {
   const { error } = await supabase
     .from('categories')
     .update({
-      name: category.name,
-      parent_category_id: category.parentCategoryId
+      name: category.name
     })
     .eq('id', category.id);
 

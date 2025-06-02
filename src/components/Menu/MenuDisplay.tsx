@@ -4,16 +4,16 @@ import { useMenu } from '../../hooks/useMenu';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const MenuDisplay: React.FC = () => {
-  const { categories, getMenuItemsByCategory, getParentCategories, getSubcategories, getCategoryName } = useMenu();
+  const { categories, getMenuItemsByCategory, getAllCategories, getCategoryName } = useMenu();
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const containerRef = React.useRef<HTMLDivElement>(null);
-  const parentCategories = getParentCategories();
+  const allCategories = getAllCategories();
 
   useEffect(() => {
-    if (parentCategories.length > 0 && !selectedCategory) {
-      setSelectedCategory(parentCategories[0].id);
+    if (allCategories.length > 0 && !selectedCategory) {
+      setSelectedCategory(allCategories[0].id);
     }
-  }, [parentCategories, selectedCategory]);
+  }, [allCategories, selectedCategory]);
 
   const scrollCategories = (direction: 'left' | 'right') => {
     if (containerRef.current) {
@@ -26,32 +26,14 @@ const MenuDisplay: React.FC = () => {
     const category = categories.find(c => c.id === categoryId);
     if (!category) return null;
 
-    const mainItems = getMenuItemsByCategory(categoryId, false);
-    const subcategories = getSubcategories(categoryId);
+    const items = getMenuItemsByCategory(categoryId);
 
     return (
       <div className="space-y-8">
-        {/* Render main category items */}
         <MenuCategory
           categoryName={category.name}
-          items={mainItems}
-          isSubcategory={false}
+          items={items}
         />
-
-        {/* Render subcategories and their items */}
-        {subcategories.map(subcat => {
-          const subcategoryItems = getMenuItemsByCategory(subcat.id, false);
-          if (subcategoryItems.length === 0) return null;
-
-          return (
-            <MenuCategory
-              key={subcat.id}
-              categoryName={subcat.name}
-              items={subcategoryItems}
-              isSubcategory={true}
-            />
-          );
-        })}
       </div>
     );
   };
@@ -71,7 +53,7 @@ const MenuDisplay: React.FC = () => {
           className="flex overflow-x-auto gap-4 pb-4 px-1 scrollbar-hide"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
-          {parentCategories.map((category) => (
+          {allCategories.map((category) => (
             <button
               key={category.id}
               onClick={() => setSelectedCategory(category.id)}
@@ -98,5 +80,3 @@ const MenuDisplay: React.FC = () => {
     </div>
   );
 };
-
-export default MenuDisplay;
