@@ -73,7 +73,12 @@ export const getCategories = async (): Promise<Category[]> => {
     return [];
   }
 
-  return categories;
+  return categories.map(category => ({
+    id: category.id,
+    name: category.name,
+    order: category.order,
+    parentCategoryId: category.parent_category_id
+  }));
 };
 
 export const addMenuItem = async (item: MenuItem): Promise<void> => {
@@ -176,7 +181,8 @@ export const addCategory = async (category: Omit<Category, 'id'>): Promise<void>
       .from('categories')
       .insert([{
         name: category.name,
-        order: newOrder
+        order: newOrder,
+        parent_category_id: category.parentCategoryId
       }]);
 
     if (insertError) {
@@ -193,7 +199,8 @@ export const updateCategory = async (category: Category): Promise<void> => {
   const { error } = await supabase
     .from('categories')
     .update({
-      name: category.name
+      name: category.name,
+      parent_category_id: category.parentCategoryId
     })
     .eq('id', category.id);
 

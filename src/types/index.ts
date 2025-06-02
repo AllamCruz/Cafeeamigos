@@ -15,6 +15,7 @@ export interface Category {
   id: string;
   name: string;
   order?: number;
+  parentCategoryId?: string | null;
 }
 
 export interface User {

@@ -40,8 +40,15 @@ export const useMenu = () => {
     }
   };
 
-  const getMenuItemsByCategory = (categoryId: string): MenuItem[] => {
-    return menuItems.filter(item => item.category === categoryId);
+  const getMenuItemsByCategory = (categoryId: string, includeSubcategories: boolean = true): MenuItem[] => {
+    if (!includeSubcategories) {
+      return menuItems.filter(item => item.category === categoryId);
+    }
+
+    const subcategoryIds = getSubcategories(categoryId).map(cat => cat.id);
+    return menuItems.filter(item => 
+      item.category === categoryId || subcategoryIds.includes(item.category)
+    );
   };
 
   const getCategoryById = (categoryId: string): Category | undefined => {
@@ -50,6 +57,14 @@ export const useMenu = () => {
 
   const getAllCategories = (): Category[] => {
     return categories;
+  };
+
+  const getParentCategories = (): Category[] => {
+    return categories.filter(category => !category.parentCategoryId);
+  };
+
+  const getSubcategories = (parentId: string): Category[] => {
+    return categories.filter(category => category.parentCategoryId === parentId);
   };
 
   const getCategoryName = (categoryId: string): string => {
@@ -145,6 +160,8 @@ export const useMenu = () => {
     getMenuItemsByCategory,
     getCategoryById,
     getAllCategories,
+    getParentCategories,
+    getSubcategories,
     getCategoryName,
     addMenuItem: handleAddMenuItem,
     updateMenuItem: handleUpdateMenuItem,
