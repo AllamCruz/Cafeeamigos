@@ -18,6 +18,8 @@ interface SortableCategoryProps {
   onDeleteItem: (id: string) => void;
   items: MenuItem[];
   subcategories: Category[];
+  getItemsByCategory: (categoryId: string) => MenuItem[];
+  getSubcategories: (categoryId: string) => Category[];
 }
 
 const SortableCategory: React.FC<SortableCategoryProps> = ({ 
@@ -29,7 +31,9 @@ const SortableCategory: React.FC<SortableCategoryProps> = ({
   onEditItem,
   onDeleteItem,
   items,
-  subcategories
+  subcategories,
+  getItemsByCategory,
+  getSubcategories
 }) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const {
@@ -191,6 +195,8 @@ const SortableCategory: React.FC<SortableCategoryProps> = ({
               onDeleteItem={onDeleteItem}
               items={getItemsByCategory(subcat.id)}
               subcategories={getSubcategories(subcat.id)}
+              getItemsByCategory={getItemsByCategory}
+              getSubcategories={getSubcategories}
             />
           ))}
         </>
@@ -419,6 +425,8 @@ const AdminPanel: React.FC = () => {
                   onDeleteItem={handleDeleteItem}
                   items={getItemsByCategory(category.id)}
                   subcategories={getSubcategories(category.id)}
+                  getItemsByCategory={getItemsByCategory}
+                  getSubcategories={getSubcategories}
                 />
               ))}
             </div>
