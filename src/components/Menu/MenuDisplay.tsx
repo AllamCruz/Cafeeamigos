@@ -80,3 +80,5 @@ const MenuDisplay: React.FC = () => {
     </div>
   );
 };
+
+export default MenuDisplay
