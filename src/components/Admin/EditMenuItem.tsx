@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MenuItem, Category } from '../../types';
 import { useMenu } from '../../hooks/useMenu';
-import { X, Plus, Trash, Upload } from 'lucide-react';
+import { X, Plus, Trash, Upload, AlertCircle } from 'lucide-react';
 
 interface EditMenuItemProps {
   item?: MenuItem;
-  categories: Category[];
   onSave: (item: MenuItem) => void;
   onCancel: () => void;
 }
@@ -24,7 +23,6 @@ const defaultMenuItem: MenuItem = {
 
 const EditMenuItem: React.FC<EditMenuItemProps> = ({ 
   item, 
-  categories, 
   onSave, 
   onCancel 
 }) => {
@@ -33,7 +31,11 @@ const EditMenuItem: React.FC<EditMenuItemProps> = ({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [newSize, setNewSize] = useState({ size: '', price: '' });
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const categories = getAllCategories();
 
   useEffect(() => {
     if (item) {
@@ -59,6 +61,11 @@ const EditMenuItem: React.FC<EditMenuItemProps> = ({
       setFormData({ ...formData, [name]: numValue });
     } else {
       setFormData({ ...formData, [name]: value });
+    }
+
+    // Clear field-specific errors when user starts typing
+    if (errors[name]) {
+      setErrors({ ...errors, [name]: '' });
     }
   };
 
@@ -102,8 +109,7 @@ const EditMenuItem: React.FC<EditMenuItemProps> = ({
   };
 
   const renderCategoryOptions = (categories: Category[], level = 0): JSX.Element[] => {
-    const allCategories = getAllCategories();
-    const parentCategories = allCategories.filter(cat => !cat.parentCategoryId);
+    const parentCategories = categories.filter(cat => !cat.parentCategoryId);
     
     const renderCategory = (category: Category, currentLevel: number): JSX.Element[] => {
       const subcategories = getSubcategories(category.id);
@@ -142,11 +148,23 @@ const EditMenuItem: React.FC<EditMenuItemProps> = ({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (validate()) {
-      onSave(formData);
+    if (!validate()) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitError('');
+
+    try {
+      await onSave(formData);
+    } catch (error) {
+      console.error('Error saving menu item:', error);
+      setSubmitError('Erro ao salvar o item. Tente novamente.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -160,10 +178,18 @@ const EditMenuItem: React.FC<EditMenuItemProps> = ({
           <button 
             onClick={onCancel}
             className="text-gray-500 hover:text-gray-700"
+            disabled={isSubmitting}
           >
             <X size={20} />
           </button>
         </div>
+        
+        {submitError && (
+          <div className="mx-4 mt-4 p-3 bg-red-50 border border-red-200 rounded-md flex items-center">
+            <AlertCircle className="h-5 w-5 text-red-500 mr-2" />
+            <span className="text-red-700 text-sm">{submitError}</span>
+          </div>
+        )}
         
         <form onSubmit={handleSubmit} className="p-4">
           <div className="mb-4">
@@ -176,7 +202,8 @@ const EditMenuItem: React.FC<EditMenuItemProps> = ({
               type="text"
               value={formData.name}
               onChange={handleChange}
-              className={`w-full p-2 border ${errors.name ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-1 focus:ring-amber-500`}
+              disabled={isSubmitting}
+              className={`w-full p-2 border ${errors.name ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-1 focus:ring-amber-500 disabled:bg-gray-100`}
             />
             {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
           </div>
@@ -191,7 +218,8 @@ const EditMenuItem: React.FC<EditMenuItemProps> = ({
               value={formData.description}
               onChange={handleChange}
               rows={3}
-              className={`w-full p-2 border ${errors.description ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-1 focus:ring-amber-500`}
+              disabled={isSubmitting}
+              className={`w-full p-2 border ${errors.description ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-1 focus:ring-amber-500 disabled:bg-gray-100`}
             />
             {errors.description && <p className="mt-1 text-sm text-red-500">{errors.description}</p>}
           </div>
@@ -208,7 +236,8 @@ const EditMenuItem: React.FC<EditMenuItemProps> = ({
               min="0"
               value={formData.price || ''}
               onChange={handleChange}
-              className={`w-full p-2 border ${errors.price ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-1 focus:ring-amber-500`}
+              disabled={isSubmitting}
+              className={`w-full p-2 border ${errors.price ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-1 focus:ring-amber-500 disabled:bg-gray-100`}
               placeholder="0.00"
             />
             {errors.price && <p className="mt-1 text-sm text-red-500">{errors.price}</p>}
@@ -227,7 +256,8 @@ const EditMenuItem: React.FC<EditMenuItemProps> = ({
                   <button
                     type="button"
                     onClick={() => handleRemoveSize(size.size)}
-                    className="text-red-500 hover:text-red-700"
+                    disabled={isSubmitting}
+                    className="text-red-500 hover:text-red-700 disabled:opacity-50"
                   >
                     <Trash size={16} />
                   </button>
@@ -240,7 +270,8 @@ const EditMenuItem: React.FC<EditMenuItemProps> = ({
                 value={newSize.size}
                 onChange={(e) => setNewSize({ ...newSize, size: e.target.value })}
                 placeholder="Tamanho (ex: P, M, G)"
-                className="flex-1 p-2 border border-gray-300 rounded-md"
+                disabled={isSubmitting}
+                className="flex-1 p-2 border border-gray-300 rounded-md disabled:bg-gray-100"
               />
               <input
                 type="number"
@@ -249,12 +280,14 @@ const EditMenuItem: React.FC<EditMenuItemProps> = ({
                 value={newSize.price}
                 onChange={(e) => setNewSize({ ...newSize, price: e.target.value })}
                 placeholder="Preço"
-                className="w-24 p-2 border border-gray-300 rounded-md"
+                disabled={isSubmitting}
+                className="w-24 p-2 border border-gray-300 rounded-md disabled:bg-gray-100"
               />
               <button
                 type="button"
                 onClick={handleAddSize}
-                className="bg-amber-500 text-white p-2 rounded-md hover:bg-amber-600"
+                disabled={isSubmitting}
+                className="bg-amber-500 text-white p-2 rounded-md hover:bg-amber-600 disabled:opacity-50"
               >
                 <Plus size={16} />
               </button>
@@ -270,7 +303,8 @@ const EditMenuItem: React.FC<EditMenuItemProps> = ({
               name="category"
               value={formData.category}
               onChange={handleChange}
-              className={`w-full p-2 border ${errors.category ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-1 focus:ring-amber-500`}
+              disabled={isSubmitting}
+              className={`w-full p-2 border ${errors.category ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-1 focus:ring-amber-500 disabled:bg-gray-100`}
             >
               <option value="">Selecionar categoria</option>
               {renderCategoryOptions(categories)}
@@ -300,7 +334,8 @@ const EditMenuItem: React.FC<EditMenuItemProps> = ({
                           fileInputRef.current.value = '';
                         }
                       }}
-                      className="absolute top-0 right-0 -mr-2 -mt-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                      disabled={isSubmitting}
+                      className="absolute top-0 right-0 -mr-2 -mt-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 disabled:opacity-50"
                     >
                       <X size={16} />
                     </button>
@@ -311,7 +346,7 @@ const EditMenuItem: React.FC<EditMenuItemProps> = ({
                     <div className="flex text-sm text-gray-600">
                       <label
                         htmlFor="image-upload"
-                        className="relative cursor-pointer bg-white rounded-md font-medium text-amber-600 hover:text-amber-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-amber-500"
+                        className={`relative cursor-pointer bg-white rounded-md font-medium text-amber-600 hover:text-amber-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-amber-500 ${isSubmitting ? 'pointer-events-none opacity-50' : ''}`}
                       >
                         <span>Carregar imagem</span>
                         <input
@@ -322,6 +357,7 @@ const EditMenuItem: React.FC<EditMenuItemProps> = ({
                           className="sr-only"
                           accept="image/*"
                           onChange={handleImageChange}
+                          disabled={isSubmitting}
                         />
                       </label>
                       <p className="pl-1">ou arraste e solte</p>
@@ -344,7 +380,8 @@ const EditMenuItem: React.FC<EditMenuItemProps> = ({
                 name="isOnSale"
                 checked={formData.isOnSale}
                 onChange={handleChange}
-                className="h-4 w-4 text-amber-500 rounded border-gray-300 focus:ring-amber-500"
+                disabled={isSubmitting}
+                className="h-4 w-4 text-amber-500 rounded border-gray-300 focus:ring-amber-500 disabled:opacity-50"
               />
               <label htmlFor="isOnSale" className="ml-2 text-sm text-gray-700">
                 Item em promoção
@@ -358,7 +395,8 @@ const EditMenuItem: React.FC<EditMenuItemProps> = ({
                 name="isMostRequested"
                 checked={formData.isMostRequested}
                 onChange={handleChange}
-                className="h-4 w-4 text-amber-500 rounded border-gray-300 focus:ring-amber-500"
+                disabled={isSubmitting}
+                className="h-4 w-4 text-amber-500 rounded border-gray-300 focus:ring-amber-500 disabled:opacity-50"
               />
               <label htmlFor="isMostRequested" className="ml-2 text-sm text-gray-700">
                 Item mais pedido
@@ -370,15 +408,24 @@ const EditMenuItem: React.FC<EditMenuItemProps> = ({
             <button
               type="button"
               onClick={onCancel}
-              className="px-4 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50"
+              disabled={isSubmitting}
+              className="px-4 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="px-4 py-2 text-sm bg-[#5c3d2e] text-white rounded-md hover:bg-amber-800 transition-colors"
+              disabled={isSubmitting}
+              className="px-4 py-2 text-sm bg-[#5c3d2e] text-white rounded-md hover:bg-amber-800 transition-colors disabled:opacity-50 flex items-center"
             >
-              Salvar
+              {isSubmitting ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Salvando...
+                </>
+              ) : (
+                'Salvar'
+              )}
             </button>
           </div>
         </form>

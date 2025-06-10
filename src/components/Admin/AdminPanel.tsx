@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useMenu } from '../../hooks/useMenu';
 import { MenuItem, Category } from '../../types';
 import EditMenuItem from './EditMenuItem';
-import { Edit, Trash, Plus, ArrowLeft, GripVertical, ChevronRight, ChevronDown } from 'lucide-react';
+import { Edit, Trash, Plus, ArrowLeft, GripVertical, ChevronRight, ChevronDown, AlertCircle, CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
@@ -205,6 +205,43 @@ const SortableCategory: React.FC<SortableCategoryProps> = ({
   );
 };
 
+interface NotificationProps {
+  type: 'success' | 'error';
+  message: string;
+  onClose: () => void;
+}
+
+const Notification: React.FC<NotificationProps> = ({ type, message, onClose }) => {
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      onClose();
+    }, 5000);
+
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  return (
+    <div className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg flex items-center space-x-2 ${
+      type === 'success' ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'
+    }`}>
+      {type === 'success' ? (
+        <CheckCircle className="h-5 w-5 text-green-500" />
+      ) : (
+        <AlertCircle className="h-5 w-5 text-red-500" />
+      )}
+      <span className={`text-sm ${type === 'success' ? 'text-green-700' : 'text-red-700'}`}>
+        {message}
+      </span>
+      <button
+        onClick={onClose}
+        className={`ml-2 ${type === 'success' ? 'text-green-500 hover:text-green-700' : 'text-red-500 hover:text-red-700'}`}
+      >
+        <X size={16} />
+      </button>
+    </div>
+  );
+};
+
 const AdminPanel: React.FC = () => {
   const {
     menuItems,
@@ -228,6 +265,8 @@ const AdminPanel: React.FC = () => {
   const [newCategoryName, setNewCategoryName] = useState('');
   const [selectedParentCategory, setSelectedParentCategory] = useState<string>('');
   const [editingCategory, setEditingCategory] = useState<{ id: string, name: string, parentCategoryId?: string | null } | null>(null);
+  const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -236,7 +275,11 @@ const AdminPanel: React.FC = () => {
     })
   );
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  const showNotification = (type: 'success' | 'error', message: string) => {
+    setNotification({ type, message });
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
@@ -247,7 +290,13 @@ const AdminPanel: React.FC = () => {
       const [movedCategory] = newCategories.splice(oldIndex, 1);
       newCategories.splice(newIndex, 0, movedCategory);
 
-      reorderCategories(newCategories);
+      try {
+        await reorderCategories(newCategories);
+        showNotification('success', 'Ordem das categorias atualizada com sucesso!');
+      } catch (error) {
+        console.error('Error reordering categories:', error);
+        showNotification('error', 'Erro ao reordenar categorias. Tente novamente.');
+      }
     }
   };
 
@@ -261,30 +310,59 @@ const AdminPanel: React.FC = () => {
     setIsAddingItem(true);
   };
 
-  const handleSaveItem = (item: MenuItem) => {
-    if (item.id) {
-      updateMenuItem(item);
-    } else {
-      addMenuItem(item);
+  const handleSaveItem = async (item: MenuItem) => {
+    try {
+      setIsLoading(true);
+      if (item.id) {
+        await updateMenuItem(item);
+        showNotification('success', 'Item atualizado com sucesso!');
+      } else {
+        await addMenuItem(item);
+        showNotification('success', 'Item adicionado com sucesso!');
+      }
+      setIsAddingItem(false);
+    } catch (error) {
+      console.error('Error saving item:', error);
+      showNotification('error', 'Erro ao salvar item. Tente novamente.');
+      throw error; // Re-throw to let EditMenuItem handle it
+    } finally {
+      setIsLoading(false);
     }
-    setIsAddingItem(false);
   };
 
-  const handleDeleteItem = (id: string) => {
+  const handleDeleteItem = async (id: string) => {
     if (window.confirm('Tem certeza que deseja excluir este item?')) {
-      deleteMenuItem(id);
+      try {
+        setIsLoading(true);
+        await deleteMenuItem(id);
+        showNotification('success', 'Item excluído com sucesso!');
+      } catch (error) {
+        console.error('Error deleting item:', error);
+        showNotification('error', 'Erro ao excluir item. Tente novamente.');
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
-  const handleAddCategory = () => {
+  const handleAddCategory = async () => {
     if (newCategoryName.trim()) {
-      addCategory({ 
-        name: newCategoryName.trim(),
-        parentCategoryId: selectedParentCategory || null
-      });
-      setNewCategoryName('');
-      setSelectedParentCategory('');
-      setIsAddingCategory(false);
+      try {
+        setIsLoading(true);
+        await addCategory({ 
+          name: newCategoryName.trim(),
+          parentCategoryId: selectedParentCategory || null
+        });
+        setNewCategoryName('');
+        setSelectedParentCategory('');
+        setIsAddingCategory(false);
+        showNotification('success', 'Categoria adicionada com sucesso!');
+      } catch (error) {
+        console.error('Error adding category:', error);
+        showNotification('error', 'Erro ao adicionar categoria. Tente novamente.');
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -301,20 +379,38 @@ const AdminPanel: React.FC = () => {
     });
   };
 
-  const handleSaveCategory = () => {
+  const handleSaveCategory = async () => {
     if (editingCategory && editingCategory.name.trim()) {
-      updateCategory({ 
-        id: editingCategory.id, 
-        name: editingCategory.name.trim(),
-        parentCategoryId: editingCategory.parentCategoryId
-      });
-      setEditingCategory(null);
+      try {
+        setIsLoading(true);
+        await updateCategory({ 
+          id: editingCategory.id, 
+          name: editingCategory.name.trim(),
+          parentCategoryId: editingCategory.parentCategoryId
+        });
+        setEditingCategory(null);
+        showNotification('success', 'Categoria atualizada com sucesso!');
+      } catch (error) {
+        console.error('Error updating category:', error);
+        showNotification('error', 'Erro ao atualizar categoria. Tente novamente.');
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
-  const handleDeleteCategory = (id: string) => {
+  const handleDeleteCategory = async (id: string) => {
     if (window.confirm('Tem certeza que deseja excluir esta categoria? Todos os itens desta categoria serão afetados.')) {
-      deleteCategory(id);
+      try {
+        setIsLoading(true);
+        await deleteCategory(id);
+        showNotification('success', 'Categoria excluída com sucesso!');
+      } catch (error) {
+        console.error('Error deleting category:', error);
+        showNotification('error', 'Erro ao excluir categoria. Tente novamente.');
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -335,6 +431,14 @@ const AdminPanel: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
+      {notification && (
+        <Notification
+          type={notification.type}
+          message={notification.message}
+          onClose={() => setNotification(null)}
+        />
+      )}
+
       <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-serif text-[#5c3d2e] mb-2">Painel Administrativo</h1>
@@ -362,14 +466,16 @@ const AdminPanel: React.FC = () => {
                   type="text"
                   value={newCategoryName}
                   onChange={(e) => setNewCategoryName(e.target.value)}
-                  className="p-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-amber-500 flex-1"
+                  disabled={isLoading}
+                  className="p-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-amber-500 flex-1 disabled:bg-gray-100"
                   placeholder="Nome da categoria"
                 />
                 <button
                   onClick={handleAddCategory}
-                  className="px-2 py-1.5 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm whitespace-nowrap"
+                  disabled={isLoading}
+                  className="px-2 py-1.5 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm whitespace-nowrap disabled:opacity-50"
                 >
-                  Salvar
+                  {isLoading ? 'Salvando...' : 'Salvar'}
                 </button>
                 <button
                   onClick={() => {
@@ -377,7 +483,8 @@ const AdminPanel: React.FC = () => {
                     setSelectedParentCategory('');
                     setNewCategoryName('');
                   }}
-                  className="px-2 py-1.5 border border-gray-300 rounded-md hover:bg-gray-50 text-sm"
+                  disabled={isLoading}
+                  className="px-2 py-1.5 border border-gray-300 rounded-md hover:bg-gray-50 text-sm disabled:opacity-50"
                 >
                   Cancelar
                 </button>
@@ -385,7 +492,8 @@ const AdminPanel: React.FC = () => {
               <select
                 value={selectedParentCategory}
                 onChange={(e) => setSelectedParentCategory(e.target.value)}
-                className="p-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-amber-500 w-full"
+                disabled={isLoading}
+                className="p-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-amber-500 w-full disabled:bg-gray-100"
               >
                 <option value="">Categoria principal (sem pai)</option>
                 {renderCategoryOptions(parentCategories)}
@@ -394,7 +502,8 @@ const AdminPanel: React.FC = () => {
           ) : (
             <button
               onClick={() => setIsAddingCategory(true)}
-              className="flex items-center space-x-1 px-3 py-1.5 bg-[#5c3d2e] text-white rounded-md hover:bg-amber-800 text-sm w-full sm:w-auto justify-center"
+              disabled={isLoading}
+              className="flex items-center space-x-1 px-3 py-1.5 bg-[#5c3d2e] text-white rounded-md hover:bg-amber-800 text-sm w-full sm:w-auto justify-center disabled:opacity-50"
             >
               <Plus size={16} />
               <span>Nova Categoria</span>
@@ -409,17 +518,20 @@ const AdminPanel: React.FC = () => {
                 type="text"
                 value={editingCategory.name}
                 onChange={(e) => setEditingCategory({ ...editingCategory, name: e.target.value })}
-                className="flex-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-amber-500"
+                disabled={isLoading}
+                className="flex-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-amber-500 disabled:bg-gray-100"
               />
               <button
                 onClick={handleSaveCategory}
-                className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm"
+                disabled={isLoading}
+                className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm disabled:opacity-50"
               >
-                Salvar
+                {isLoading ? 'Salvando...' : 'Salvar'}
               </button>
               <button
                 onClick={() => setEditingCategory(null)}
-                className="px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50 text-sm"
+                disabled={isLoading}
+                className="px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50 text-sm disabled:opacity-50"
               >
                 Cancelar
               </button>
@@ -461,7 +573,8 @@ const AdminPanel: React.FC = () => {
         <h2 className="text-xl font-serif text-[#5c3d2e]">Itens do Cardápio</h2>
         <button
           onClick={handleAddItem}
-          className="flex items-center space-x-1 px-3 py-1.5 bg-[#5c3d2e] text-white rounded-md hover:bg-amber-800 text-sm"
+          disabled={isLoading}
+          className="flex items-center space-x-1 px-3 py-1.5 bg-[#5c3d2e] text-white rounded-md hover:bg-amber-800 text-sm disabled:opacity-50"
         >
           <Plus size={16} />
           <span>Novo Item</span>
@@ -471,7 +584,6 @@ const AdminPanel: React.FC = () => {
       {isAddingItem && (
         <EditMenuItem
           item={editingItem}
-          categories={categories}
           onSave={handleSaveItem}
           onCancel={() => setIsAddingItem(false)}
         />
