@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useMenu } from '../../hooks/useMenu';
 import { MenuItem, Category } from '../../types';
 import EditMenuItem from './EditMenuItem';
-import { Edit, Trash, Plus, Coffee, ArrowLeft, Check, X, GripVertical, ChevronRight, ChevronDown } from 'lucide-react';
+import { Edit, Trash, Plus, ArrowLeft, GripVertical, ChevronRight, ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
@@ -86,7 +86,7 @@ const SortableCategory: React.FC<SortableCategoryProps> = ({
           <button
             onClick={() => onAddSubcategory(category.id)}
             className="p-1.5 text-green-600 hover:text-green-700"
-            title="Add subcategory"
+            title="Adicionar subcategoria"
           >
             <Plus size={16} />
           </button>
@@ -209,7 +209,6 @@ const AdminPanel: React.FC = () => {
   const {
     menuItems,
     categories,
-    getCategoryName,
     getParentCategories,
     getSubcategories,
     getMenuItemsByCategory,
@@ -357,41 +356,40 @@ const AdminPanel: React.FC = () => {
           <h2 className="text-xl font-serif text-[#5c3d2e]">Categorias</h2>
           
           {isAddingCategory ? (
-            <div className="flex items-center space-x-2 w-full sm:w-auto">
-              <div className="flex-1">
+            <div className="flex flex-col space-y-2 w-full sm:w-auto">
+              <div className="flex items-center space-x-2">
                 <input
                   type="text"
                   value={newCategoryName}
                   onChange={(e) => setNewCategoryName(e.target.value)}
-                  className="p-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-amber-500 w-full"
+                  className="p-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-amber-500 flex-1"
                   placeholder="Nome da categoria"
                 />
-                {selectedParentCategory && (
-                  <select
-                    value={selectedParentCategory}
-                    onChange={(e) => setSelectedParentCategory(e.target.value)}
-                    className="mt-2 p-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-amber-500 w-full"
-                  >
-                    <option value="">Selecione a categoria pai</option>
-                    {renderCategoryOptions(parentCategories)}
-                  </select>
-                )}
+                <button
+                  onClick={handleAddCategory}
+                  className="px-2 py-1.5 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm whitespace-nowrap"
+                >
+                  Salvar
+                </button>
+                <button
+                  onClick={() => {
+                    setIsAddingCategory(false);
+                    setSelectedParentCategory('');
+                    setNewCategoryName('');
+                  }}
+                  className="px-2 py-1.5 border border-gray-300 rounded-md hover:bg-gray-50 text-sm"
+                >
+                  Cancelar
+                </button>
               </div>
-              <button
-                onClick={handleAddCategory}
-                className="px-2 py-1.5 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm whitespace-nowrap"
+              <select
+                value={selectedParentCategory}
+                onChange={(e) => setSelectedParentCategory(e.target.value)}
+                className="p-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-amber-500 w-full"
               >
-                Salvar
-              </button>
-              <button
-                onClick={() => {
-                  setIsAddingCategory(false);
-                  setSelectedParentCategory('');
-                }}
-                className="px-2 py-1.5 border border-gray-300 rounded-md hover:bg-gray-50 text-sm"
-              >
-                Cancelar
-              </button>
+                <option value="">Categoria principal (sem pai)</option>
+                {renderCategoryOptions(parentCategories)}
+              </select>
             </div>
           ) : (
             <button
@@ -403,6 +401,31 @@ const AdminPanel: React.FC = () => {
             </button>
           )}
         </div>
+
+        {editingCategory && (
+          <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+            <div className="flex items-center space-x-2">
+              <input
+                type="text"
+                value={editingCategory.name}
+                onChange={(e) => setEditingCategory({ ...editingCategory, name: e.target.value })}
+                className="flex-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-amber-500"
+              />
+              <button
+                onClick={handleSaveCategory}
+                className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm"
+              >
+                Salvar
+              </button>
+              <button
+                onClick={() => setEditingCategory(null)}
+                className="px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50 text-sm"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        )}
         
         <DndContext
           sensors={sensors}

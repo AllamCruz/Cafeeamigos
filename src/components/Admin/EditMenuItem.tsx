@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MenuItem, Category } from '../../types';
+import { useMenu } from '../../hooks/useMenu';
 import { X, Plus, Trash, Upload } from 'lucide-react';
 
 interface EditMenuItemProps {
@@ -27,6 +28,7 @@ const EditMenuItem: React.FC<EditMenuItemProps> = ({
   onSave, 
   onCancel 
 }) => {
+  const { getAllCategories, getSubcategories } = useMenu();
   const [formData, setFormData] = useState<MenuItem>(item || defaultMenuItem);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [newSize, setNewSize] = useState({ size: '', price: '' });
@@ -100,12 +102,20 @@ const EditMenuItem: React.FC<EditMenuItemProps> = ({
   };
 
   const renderCategoryOptions = (categories: Category[], level = 0): JSX.Element[] => {
-    return categories.flatMap(category => [
-      <option key={category.id} value={category.id}>
-        {'  '.repeat(level) + category.name}
-      </option>,
-      ...(category.subcategories ? renderCategoryOptions(category.subcategories, level + 1) : [])
-    ]);
+    const allCategories = getAllCategories();
+    const parentCategories = allCategories.filter(cat => !cat.parentCategoryId);
+    
+    const renderCategory = (category: Category, currentLevel: number): JSX.Element[] => {
+      const subcategories = getSubcategories(category.id);
+      return [
+        <option key={category.id} value={category.id}>
+          {'  '.repeat(currentLevel) + category.name}
+        </option>,
+        ...subcategories.flatMap(subcat => renderCategory(subcat, currentLevel + 1))
+      ];
+    };
+
+    return parentCategories.flatMap(category => renderCategory(category, level));
   };
 
   const validate = (): boolean => {

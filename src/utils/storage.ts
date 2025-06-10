@@ -2,10 +2,6 @@ import { supabase } from './supabase';
 import { MenuItem, Category } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 
-export const initializeStorage = async (): Promise<void> => {
-  // Migration is now handled through Supabase migrations
-};
-
 export const uploadImage = async (file: File): Promise<string> => {
   const fileExt = file.name.split('.').pop();
   const fileName = `${uuidv4()}.${fileExt}`;
