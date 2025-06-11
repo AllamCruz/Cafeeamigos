@@ -77,14 +77,14 @@ export const getCategories = async (): Promise<Category[]> => {
   }));
 };
 
-export const addMenuItem = async (item: MenuItem): Promise<void> => {
+export const addMenuItem = async (item: MenuItem): Promise<MenuItem> => {
   let imageUrl = item.imageUrl;
 
   if (item.imageFile) {
     imageUrl = await uploadImage(item.imageFile);
   }
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('menu_items')
     .insert([{
       name: item.name,
@@ -95,15 +95,29 @@ export const addMenuItem = async (item: MenuItem): Promise<void> => {
       sizes: item.sizes || [],
       is_on_sale: item.isOnSale || false,
       is_most_requested: item.isMostRequested || false
-    }]);
+    }])
+    .select()
+    .single();
 
   if (error) {
     console.error('Error adding menu item:', error);
     throw error;
   }
+
+  return {
+    id: data.id,
+    name: data.name,
+    description: data.description,
+    price: data.price,
+    category: data.category_id,
+    imageUrl: data.image_url,
+    sizes: data.sizes,
+    isOnSale: data.is_on_sale,
+    isMostRequested: data.is_most_requested
+  };
 };
 
-export const updateMenuItem = async (item: MenuItem): Promise<void> => {
+export const updateMenuItem = async (item: MenuItem): Promise<MenuItem> => {
   let imageUrl = item.imageUrl;
 
   if (item.imageFile) {
@@ -114,7 +128,7 @@ export const updateMenuItem = async (item: MenuItem): Promise<void> => {
     imageUrl = await uploadImage(item.imageFile);
   }
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('menu_items')
     .update({
       name: item.name,
@@ -126,12 +140,26 @@ export const updateMenuItem = async (item: MenuItem): Promise<void> => {
       is_on_sale: item.isOnSale || false,
       is_most_requested: item.isMostRequested || false
     })
-    .eq('id', item.id);
+    .eq('id', item.id)
+    .select()
+    .single();
 
   if (error) {
     console.error('Error updating menu item:', error);
     throw error;
   }
+
+  return {
+    id: data.id,
+    name: data.name,
+    description: data.description,
+    price: data.price,
+    category: data.category_id,
+    imageUrl: data.image_url,
+    sizes: data.sizes,
+    isOnSale: data.is_on_sale,
+    isMostRequested: data.is_most_requested
+  };
 };
 
 export const deleteMenuItem = async (id: string): Promise<void> => {
@@ -157,7 +185,7 @@ export const deleteMenuItem = async (id: string): Promise<void> => {
   }
 };
 
-export const addCategory = async (category: Omit<Category, 'id'>): Promise<void> => {
+export const addCategory = async (category: Omit<Category, 'id'>): Promise<Category> => {
   try {
     const { data: maxOrderResult, error: maxOrderError } = await supabase
       .from('categories')
@@ -173,37 +201,55 @@ export const addCategory = async (category: Omit<Category, 'id'>): Promise<void>
 
     const newOrder = maxOrderResult ? (maxOrderResult.order + 1) : 0;
 
-    const { error: insertError } = await supabase
+    const { data, error: insertError } = await supabase
       .from('categories')
       .insert([{
         name: category.name,
         order: newOrder,
         parent_category_id: category.parentCategoryId
-      }]);
+      }])
+      .select()
+      .single();
 
     if (insertError) {
       console.error('Error adding category:', insertError);
       throw insertError;
     }
+
+    return {
+      id: data.id,
+      name: data.name,
+      order: data.order,
+      parentCategoryId: data.parent_category_id
+    };
   } catch (error) {
     console.error('Error in addCategory:', error);
     throw error;
   }
 };
 
-export const updateCategory = async (category: Category): Promise<void> => {
-  const { error } = await supabase
+export const updateCategory = async (category: Category): Promise<Category> => {
+  const { data, error } = await supabase
     .from('categories')
     .update({
       name: category.name,
       parent_category_id: category.parentCategoryId
     })
-    .eq('id', category.id);
+    .eq('id', category.id)
+    .select()
+    .single();
 
   if (error) {
     console.error('Error updating category:', error);
     throw error;
   }
+
+  return {
+    id: data.id,
+    name: data.name,
+    order: data.order,
+    parentCategoryId: data.parent_category_id
+  };
 };
 
 export const deleteCategory = async (id: string): Promise<void> => {

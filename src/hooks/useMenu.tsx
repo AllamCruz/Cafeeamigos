@@ -74,9 +74,8 @@ export const useMenu = () => {
 
   const handleAddMenuItem = async (item: MenuItem) => {
     try {
-      await addMenuItem(item);
-      const updatedItems = await getMenuItems();
-      setMenuItems(updatedItems);
+      const newItem = await addMenuItem(item);
+      setMenuItems(prevItems => [...prevItems, newItem]);
     } catch (err) {
       setError('Failed to add menu item');
       throw err;
@@ -85,9 +84,12 @@ export const useMenu = () => {
 
   const handleUpdateMenuItem = async (item: MenuItem) => {
     try {
-      await updateMenuItem(item);
-      const updatedItems = await getMenuItems();
-      setMenuItems(updatedItems);
+      const updatedItem = await updateMenuItem(item);
+      setMenuItems(prevItems => 
+        prevItems.map(prevItem => 
+          prevItem.id === updatedItem.id ? updatedItem : prevItem
+        )
+      );
     } catch (err) {
       setError('Failed to update menu item');
       throw err;
@@ -97,8 +99,7 @@ export const useMenu = () => {
   const handleDeleteMenuItem = async (id: string) => {
     try {
       await deleteMenuItem(id);
-      const updatedItems = await getMenuItems();
-      setMenuItems(updatedItems);
+      setMenuItems(prevItems => prevItems.filter(item => item.id !== id));
     } catch (err) {
       setError('Failed to delete menu item');
       throw err;
@@ -107,9 +108,8 @@ export const useMenu = () => {
 
   const handleAddCategory = async (category: Omit<Category, 'id'>) => {
     try {
-      await addCategory(category);
-      const updatedCategories = await getCategories();
-      setCategories(updatedCategories);
+      const newCategory = await addCategory(category);
+      setCategories(prevCategories => [...prevCategories, newCategory]);
     } catch (err) {
       setError('Failed to add category');
       throw err;
@@ -118,9 +118,12 @@ export const useMenu = () => {
 
   const handleUpdateCategory = async (category: Category) => {
     try {
-      await updateCategory(category);
-      const updatedCategories = await getCategories();
-      setCategories(updatedCategories);
+      const updatedCategory = await updateCategory(category);
+      setCategories(prevCategories => 
+        prevCategories.map(prevCategory => 
+          prevCategory.id === updatedCategory.id ? updatedCategory : prevCategory
+        )
+      );
     } catch (err) {
       setError('Failed to update category');
       throw err;
@@ -130,12 +133,9 @@ export const useMenu = () => {
   const handleDeleteCategory = async (id: string) => {
     try {
       await deleteCategory(id);
-      const [updatedItems, updatedCategories] = await Promise.all([
-        getMenuItems(),
-        getCategories()
-      ]);
-      setMenuItems(updatedItems);
-      setCategories(updatedCategories);
+      setCategories(prevCategories => prevCategories.filter(category => category.id !== id));
+      // Also remove menu items that belonged to this category
+      setMenuItems(prevItems => prevItems.filter(item => item.category !== id));
     } catch (err) {
       setError('Failed to delete category');
       throw err;
