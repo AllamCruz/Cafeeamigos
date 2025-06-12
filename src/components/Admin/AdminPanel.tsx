@@ -77,7 +77,7 @@ const SortableCategory: React.FC<SortableCategoryProps> = ({
           </button>
           <span className="truncate ml-2">{category.name}</span>
           <span className="ml-2 text-xs text-gray-500">
-            ({items.length} items, {subcategories.length} subcategorias)
+            ({items.length} {items.length === 1 ? 'item' : 'itens'})
           </span>
         </div>
         <div className="flex items-center space-x-2 ml-2">
