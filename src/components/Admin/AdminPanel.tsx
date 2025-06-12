@@ -13,7 +13,6 @@ interface SortableCategoryProps {
   level?: number;
   onEdit: (category: Category) => void;
   onDelete: (id: string) => void;
-  onAddSubcategory: (parentId: string) => void;
   onEditItem: (item: MenuItem) => void;
   onDeleteItem: (id: string) => void;
   items: MenuItem[];
@@ -27,7 +26,6 @@ const SortableCategory: React.FC<SortableCategoryProps> = ({
   level = 0, 
   onEdit, 
   onDelete,
-  onAddSubcategory,
   onEditItem,
   onDeleteItem,
   items,
@@ -83,13 +81,6 @@ const SortableCategory: React.FC<SortableCategoryProps> = ({
           </span>
         </div>
         <div className="flex items-center space-x-2 ml-2">
-          <button
-            onClick={() => onAddSubcategory(category.id)}
-            className="p-1.5 text-green-600 hover:text-green-700"
-            title="Adicionar subcategoria"
-          >
-            <Plus size={16} />
-          </button>
           <button
             onClick={() => onEdit(category)}
             className="p-1.5 text-blue-600 hover:text-blue-700"
@@ -190,7 +181,6 @@ const SortableCategory: React.FC<SortableCategoryProps> = ({
               level={level + 1}
               onEdit={onEdit}
               onDelete={onDelete}
-              onAddSubcategory={onAddSubcategory}
               onEditItem={onEditItem}
               onDeleteItem={onDeleteItem}
               items={getItemsByCategory(subcat.id)}
@@ -263,7 +253,6 @@ const AdminPanel: React.FC = () => {
   const [isAddingItem, setIsAddingItem] = useState(false);
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
-  const [selectedParentCategory, setSelectedParentCategory] = useState<string>('');
   const [editingCategory, setEditingCategory] = useState<{ id: string, name: string, parentCategoryId?: string | null } | null>(null);
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -351,10 +340,9 @@ const AdminPanel: React.FC = () => {
         setIsLoading(true);
         await addCategory({ 
           name: newCategoryName.trim(),
-          parentCategoryId: selectedParentCategory || null
+          parentCategoryId: null
         });
         setNewCategoryName('');
-        setSelectedParentCategory('');
         setIsAddingCategory(false);
         showNotification('success', 'Categoria adicionada com sucesso!');
       } catch (error) {
@@ -364,11 +352,6 @@ const AdminPanel: React.FC = () => {
         setIsLoading(false);
       }
     }
-  };
-
-  const handleAddSubcategory = (parentId: string) => {
-    setSelectedParentCategory(parentId);
-    setIsAddingCategory(true);
   };
 
   const handleEditCategory = (category: Category) => {
@@ -418,15 +401,6 @@ const AdminPanel: React.FC = () => {
     return getMenuItemsByCategory(categoryId, false);
   };
 
-  const renderCategoryOptions = (categories: Category[], level = 0): JSX.Element[] => {
-    return categories.flatMap(category => [
-      <option key={category.id} value={category.id}>
-        {'  '.repeat(level) + category.name}
-      </option>,
-      ...renderCategoryOptions(getSubcategories(category.id), level + 1)
-    ]);
-  };
-
   const parentCategories = getParentCategories();
 
   return (
@@ -460,44 +434,32 @@ const AdminPanel: React.FC = () => {
           <h2 className="text-xl font-serif text-[#5c3d2e]">Categorias</h2>
           
           {isAddingCategory ? (
-            <div className="flex flex-col space-y-2 w-full sm:w-auto">
-              <div className="flex items-center space-x-2">
-                <input
-                  type="text"
-                  value={newCategoryName}
-                  onChange={(e) => setNewCategoryName(e.target.value)}
-                  disabled={isLoading}
-                  className="p-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-amber-500 flex-1 disabled:bg-gray-100"
-                  placeholder="Nome da categoria"
-                />
-                <button
-                  onClick={handleAddCategory}
-                  disabled={isLoading}
-                  className="px-2 py-1.5 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm whitespace-nowrap disabled:opacity-50"
-                >
-                  {isLoading ? 'Salvando...' : 'Salvar'}
-                </button>
-                <button
-                  onClick={() => {
-                    setIsAddingCategory(false);
-                    setSelectedParentCategory('');
-                    setNewCategoryName('');
-                  }}
-                  disabled={isLoading}
-                  className="px-2 py-1.5 border border-gray-300 rounded-md hover:bg-gray-50 text-sm disabled:opacity-50"
-                >
-                  Cancelar
-                </button>
-              </div>
-              <select
-                value={selectedParentCategory}
-                onChange={(e) => setSelectedParentCategory(e.target.value)}
+            <div className="flex items-center space-x-2 w-full sm:w-auto">
+              <input
+                type="text"
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
                 disabled={isLoading}
-                className="p-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-amber-500 w-full disabled:bg-gray-100"
+                className="p-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-amber-500 flex-1 disabled:bg-gray-100"
+                placeholder="Nome da categoria"
+              />
+              <button
+                onClick={handleAddCategory}
+                disabled={isLoading}
+                className="px-2 py-1.5 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm whitespace-nowrap disabled:opacity-50"
               >
-                <option value="">Categoria principal (sem pai)</option>
-                {renderCategoryOptions(parentCategories)}
-              </select>
+                {isLoading ? 'Salvando...' : 'Salvar'}
+              </button>
+              <button
+                onClick={() => {
+                  setIsAddingCategory(false);
+                  setNewCategoryName('');
+                }}
+                disabled={isLoading}
+                className="px-2 py-1.5 border border-gray-300 rounded-md hover:bg-gray-50 text-sm disabled:opacity-50"
+              >
+                Cancelar
+              </button>
             </div>
           ) : (
             <button
@@ -555,7 +517,6 @@ const AdminPanel: React.FC = () => {
                   category={category}
                   onEdit={handleEditCategory}
                   onDelete={handleDeleteCategory}
-                  onAddSubcategory={handleAddSubcategory}
                   onEditItem={handleEditItem}
                   onDeleteItem={handleDeleteItem}
                   items={getItemsByCategory(category.id)}
