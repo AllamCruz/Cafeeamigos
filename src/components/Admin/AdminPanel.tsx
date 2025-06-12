@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useMenu } from '../../hooks/useMenu';
 import { MenuItem, Category } from '../../types';
 import EditMenuItem from './EditMenuItem';
-import { Edit, Trash, Plus, ArrowLeft, GripVertical, ChevronRight, ChevronDown, AlertCircle, CheckCircle } from 'lucide-react';
+import { Edit, Trash, Plus, ArrowLeft, GripVertical, ChevronRight, ChevronDown, AlertCircle, CheckCircle, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
