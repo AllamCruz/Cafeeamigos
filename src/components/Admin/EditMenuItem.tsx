@@ -26,7 +26,7 @@ const EditMenuItem: React.FC<EditMenuItemProps> = ({
   onSave, 
   onCancel 
 }) => {
-  const { getAllCategories, getSubcategories, getCategoryHierarchy } = useMenu();
+  const { getAllCategories, getCategoryHierarchy } = useMenu();
   const [formData, setFormData] = useState<MenuItem>(item || defaultMenuItem);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [newSize, setNewSize] = useState({ size: '', price: '' });
@@ -44,19 +44,12 @@ const EditMenuItem: React.FC<EditMenuItemProps> = ({
         setImagePreview(item.imageUrl);
       }
     } else {
-      // Find the first available category (subcategory or parent without subcategories)
-      const availableCategory = categories.find(cat => {
-        const hasSubcategories = getSubcategories(cat.id).length > 0;
-        const isParentCategory = !cat.parentCategoryId;
-        // Allow if it's a subcategory OR if it's a parent category without subcategories
-        return !isParentCategory || !hasSubcategories;
-      });
-      
-      if (availableCategory) {
-        setFormData({ ...defaultMenuItem, category: availableCategory.id });
+      // Set first available category as default
+      if (categories.length > 0) {
+        setFormData({ ...defaultMenuItem, category: categories[0].id });
       }
     }
-  }, [item, categories, getSubcategories]);
+  }, [item, categories]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -120,26 +113,16 @@ const EditMenuItem: React.FC<EditMenuItemProps> = ({
     const parentCategories = categories.filter(cat => !cat.parentCategoryId);
     
     const renderCategory = (category: Category, currentLevel: number): JSX.Element[] => {
-      const subcategories = getSubcategories(category.id);
+      const subcategories = categories.filter(cat => cat.parentCategoryId === category.id);
       const indent = '  '.repeat(currentLevel);
       const icon = currentLevel === 0 ? '📁 ' : '📂 ';
-      
-      // Check if this is a parent category with subcategories
-      const isParentWithSubcategories = currentLevel === 0 && subcategories.length > 0;
       
       return [
         <option 
           key={category.id} 
           value={category.id}
-          disabled={isParentWithSubcategories}
-          style={isParentWithSubcategories ? { 
-            color: '#9CA3AF', 
-            fontStyle: 'italic',
-            backgroundColor: '#F9FAFB'
-          } : {}}
         >
           {indent + icon + category.name}
-          {isParentWithSubcategories ? ' (possui subcategorias)' : ''}
         </option>,
         ...subcategories.flatMap(subcat => renderCategory(subcat, currentLevel + 1))
       ];
@@ -166,15 +149,6 @@ const EditMenuItem: React.FC<EditMenuItemProps> = ({
     
     if (!formData.category) {
       newErrors.category = 'Categoria é obrigatória';
-    } else {
-      // Check if selected category is a parent with subcategories
-      const selectedCategory = categories.find(cat => cat.id === formData.category);
-      if (selectedCategory && !selectedCategory.parentCategoryId) {
-        const hasSubcategories = getSubcategories(selectedCategory.id).length > 0;
-        if (hasSubcategories) {
-          newErrors.category = 'Não é possível adicionar itens diretamente a uma categoria que possui subcategorias. Selecione uma subcategoria.';
-        }
-      }
     }
     
     setErrors(newErrors);
@@ -288,12 +262,6 @@ const EditMenuItem: React.FC<EditMenuItemProps> = ({
                     Hierarquia: {getCategoryHierarchy(formData.category)}
                   </p>
                 )}
-                <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <p className="text-xs text-blue-700">
-                    <strong>Nota:</strong> Categorias principais que possuem subcategorias não podem receber itens diretamente. 
-                    Selecione uma subcategoria específica para organizar melhor seu cardápio.
-                  </p>
-                </div>
               </div>
             </div>
 
