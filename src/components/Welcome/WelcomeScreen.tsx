@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Coffee, Clock, MapPin, Phone } from 'lucide-react';
+import { Clock, MapPin, Phone } from 'lucide-react';
 
 interface WelcomeScreenProps {
   onEnter: () => void;
@@ -19,12 +19,12 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onEnter }) => {
       }`}>
         {/* Logo */}
         <div className="mb-8">
-          <div className="flex items-center justify-center space-x-3 mb-4">
-            <Coffee className="h-12 w-12 text-amber-200" />
-            <div className="text-amber-50">
-              <h1 className="text-4xl font-serif italic">Café & Amigos</h1>
-              <p className="text-lg font-light tracking-wider">Bistrô Bar</p>
-            </div>
+          <div className="flex items-center justify-center mb-4">
+            <img 
+              src="/IMG_20250629_114221.jpg" 
+              alt="Logo Café & Amigos Bistrô Bar" 
+              className="h-24 w-auto object-contain"
+            />
           </div>
         </div>
 
