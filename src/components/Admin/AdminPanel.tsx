@@ -32,7 +32,7 @@ const SortableCategory: React.FC<SortableCategoryProps> = ({
   subcategories,
   level = 0
 }) => {
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false); // Changed to false by default
   const {
     attributes,
     listeners,
@@ -495,8 +495,9 @@ const AdminPanel: React.FC = () => {
       <div className="mb-10">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-serif text-[#532b1b]">Estrutura do Cardápio</h2>
-          <div className="text-sm text-gray-500 bg-amber-50 px-3 py-1 rounded-full">
-            Use o botão <Plus size={12} className="inline mx-1" /> verde para adicionar itens diretamente às categorias
+          <div className="text-sm text-gray-500 bg-amber-50 px-3 py-1 rounded-full flex items-center">
+            <ChevronRight size={12} className="mr-1" />
+            Clique nas setas para expandir as categorias
           </div>
         </div>
         
