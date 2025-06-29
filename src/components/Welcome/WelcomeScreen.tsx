@@ -12,6 +12,14 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onEnter }) => {
     setIsVisible(true);
   }, []);
 
+  const handleLocationClick = () => {
+    window.open('https://maps.app.goo.gl/227eB5SE4MdJ2xcu8', '_blank');
+  };
+
+  const handleContactClick = () => {
+    window.open('https://wa.me/+5588988119895', '_blank');
+  };
+
   return (
     <div className="min-h-screen bg-[#532b1b] flex items-center justify-center p-4">
       <div className={`max-w-md w-full text-center transition-all duration-1000 ${
@@ -46,21 +54,27 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onEnter }) => {
             </div>
           </div>
           
-          <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 flex items-center space-x-3">
+          <button 
+            onClick={handleLocationClick}
+            className="w-full bg-white/10 backdrop-blur-sm rounded-lg p-3 flex items-center space-x-3 hover:bg-white/20 transition-colors cursor-pointer"
+          >
             <MapPin className="h-5 w-5 text-amber-200" />
             <div className="text-left text-amber-50">
               <p className="text-sm font-medium">Localização</p>
               <p className="text-xs text-amber-100">Lagoa Do Carneiro, Acaraú-CE</p>
             </div>
-          </div>
+          </button>
           
-          <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 flex items-center space-x-3">
+          <button 
+            onClick={handleContactClick}
+            className="w-full bg-white/10 backdrop-blur-sm rounded-lg p-3 flex items-center space-x-3 hover:bg-white/20 transition-colors cursor-pointer"
+          >
             <Phone className="h-5 w-5 text-amber-200" />
             <div className="text-left text-amber-50">
               <p className="text-sm font-medium">Contato</p>
               <p className="text-xs text-amber-100">(88) 9.8811-9895</p>
             </div>
-          </div>
+          </button>
         </div>
 
         {/* Enter Button */}
