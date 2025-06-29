@@ -29,7 +29,7 @@ const AdminLogin: React.FC = () => {
   };
 
   return (
-    <div className="min-h-[calc(100vh-300px)] flex items-center justify-center py-12 px-4">
+    <div className="min-h-[calc(100vh-300px)] flex items-center justify-center py-12 px-4 bg-[#5c3d2e]">
       <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 border border-amber-100">
         <div className="text-center mb-8">
           <h2 className="text-2xl font-serif text-[#5c3d2e]">Acesso Administrativo</h2>
