@@ -40,8 +40,16 @@ export const useMenu = () => {
     }
   };
 
-  const getMenuItemsByCategory = (categoryId: string): MenuItem[] => {
-    return menuItems.filter(item => item.category === categoryId);
+  const getMenuItemsByCategory = (categoryId: string, includeSubcategories: boolean = true): MenuItem[] => {
+    if (!includeSubcategories) {
+      return menuItems.filter(item => item.category === categoryId);
+    }
+
+    // Get items from the category and all its subcategories
+    const subcategoryIds = getSubcategories(categoryId).map(sub => sub.id);
+    const allCategoryIds = [categoryId, ...subcategoryIds];
+    
+    return menuItems.filter(item => allCategoryIds.includes(item.category));
   };
 
   const getCategoryById = (categoryId: string): Category | undefined => {
@@ -56,9 +64,25 @@ export const useMenu = () => {
     return categories.filter(category => !category.parentCategoryId);
   };
 
+  const getSubcategories = (parentId: string): Category[] => {
+    return categories.filter(category => category.parentCategoryId === parentId);
+  };
+
   const getCategoryName = (categoryId: string): string => {
     const category = getCategoryById(categoryId);
     return category ? category.name : '';
+  };
+
+  const getCategoryHierarchy = (categoryId: string): string => {
+    const category = getCategoryById(categoryId);
+    if (!category) return '';
+    
+    if (category.parentCategoryId) {
+      const parent = getCategoryById(category.parentCategoryId);
+      return parent ? `${parent.name} > ${category.name}` : category.name;
+    }
+    
+    return category.name;
   };
 
   const handleAddMenuItem = async (item: MenuItem) => {
@@ -149,7 +173,9 @@ export const useMenu = () => {
     getCategoryById,
     getAllCategories,
     getParentCategories,
+    getSubcategories,
     getCategoryName,
+    getCategoryHierarchy,
     addMenuItem: handleAddMenuItem,
     updateMenuItem: handleUpdateMenuItem,
     deleteMenuItem: handleDeleteMenuItem,

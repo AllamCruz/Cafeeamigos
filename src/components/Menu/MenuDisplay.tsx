@@ -4,16 +4,16 @@ import { useMenu } from '../../hooks/useMenu';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const MenuDisplay: React.FC = () => {
-  const { categories, getMenuItemsByCategory, getAllCategories } = useMenu();
+  const { categories, getMenuItemsByCategory, getParentCategories, getSubcategories } = useMenu();
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const containerRef = useRef<HTMLDivElement>(null);
-  const allCategories = getAllCategories();
+  const parentCategories = getParentCategories();
 
   useEffect(() => {
-    if (allCategories.length > 0 && !selectedCategory) {
-      setSelectedCategory(allCategories[0].id);
+    if (parentCategories.length > 0 && !selectedCategory) {
+      setSelectedCategory(parentCategories[0].id);
     }
-  }, [allCategories, selectedCategory]);
+  }, [parentCategories, selectedCategory]);
 
   const scrollCategories = (direction: 'left' | 'right') => {
     if (containerRef.current) {
@@ -26,7 +26,37 @@ const MenuDisplay: React.FC = () => {
     const category = categories.find(c => c.id === categoryId);
     if (!category) return null;
 
-    const items = getMenuItemsByCategory(categoryId);
+    const subcategories = getSubcategories(categoryId);
+    
+    // If category has subcategories, show them with their items
+    if (subcategories.length > 0) {
+      return (
+        <div className="space-y-12">
+          {subcategories.map((subcategory) => {
+            const items = getMenuItemsByCategory(subcategory.id, false);
+            if (items.length === 0) return null;
+            
+            return (
+              <MenuCategory
+                key={subcategory.id}
+                categoryName={subcategory.name}
+                items={items}
+              />
+            );
+          })}
+        </div>
+      );
+    }
+
+    // If no subcategories, show items directly
+    const items = getMenuItemsByCategory(categoryId, false);
+    if (items.length === 0) {
+      return (
+        <div className="text-center py-16">
+          <p className="text-gray-500 text-lg">Nenhum item encontrado nesta categoria.</p>
+        </div>
+      );
+    }
 
     return (
       <div className="space-y-8">
@@ -38,7 +68,7 @@ const MenuDisplay: React.FC = () => {
     );
   };
 
-  if (allCategories.length === 0) {
+  if (parentCategories.length === 0) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-16 text-center">
         <p className="text-gray-500 text-lg">Carregando cardápio...</p>
@@ -48,6 +78,7 @@ const MenuDisplay: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
+      {/* Category Navigation */}
       <div className="relative mb-8">
         <button 
           onClick={() => scrollCategories('left')}
@@ -62,13 +93,13 @@ const MenuDisplay: React.FC = () => {
           className="flex overflow-x-auto gap-4 pb-4 px-1 scrollbar-hide"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
-          {allCategories.map((category) => (
+          {parentCategories.map((category) => (
             <button
               key={category.id}
               onClick={() => setSelectedCategory(category.id)}
               className={`px-6 py-2 rounded-full whitespace-nowrap transition-colors ${
                 selectedCategory === category.id
-                  ? 'bg-[#5c3d2e] text-white'
+                  ? 'bg-[#532b1b] text-white'
                   : 'bg-amber-100 text-amber-900 hover:bg-amber-200'
               }`}
             >
@@ -86,6 +117,7 @@ const MenuDisplay: React.FC = () => {
         </button>
       </div>
 
+      {/* Category Content */}
       {selectedCategory && renderCategoryContent(selectedCategory)}
     </div>
   );
