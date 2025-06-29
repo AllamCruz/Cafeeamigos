@@ -28,7 +28,7 @@ const MenuCategory: React.FC<MenuCategoryProps> = ({ categoryName, items }) => {
   return (
     <div className="mb-10">
       <div className="flex items-center mb-4">
-        <h2 className="text-2xl font-serif text-amber-100 relative">
+        <h2 className="text-2xl font-serif text-[#5c3d2e] relative">
           {categoryName}
           <span className="absolute -bottom-1 left-0 h-0.5 bg-amber-500 w-1/2"></span>
         </h2>
