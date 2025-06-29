@@ -5,6 +5,7 @@ import { X, Plus, Trash, Upload, AlertCircle, FolderOpen, Folder } from 'lucide-
 
 interface EditMenuItemProps {
   item?: MenuItem;
+  initialCategoryId?: string;
   onSave: (item: MenuItem) => void;
   onCancel: () => void;
 }
@@ -23,6 +24,7 @@ const defaultMenuItem: MenuItem = {
 
 const EditMenuItem: React.FC<EditMenuItemProps> = ({ 
   item, 
+  initialCategoryId,
   onSave, 
   onCancel 
 }) => {
@@ -44,12 +46,11 @@ const EditMenuItem: React.FC<EditMenuItemProps> = ({
         setImagePreview(item.imageUrl);
       }
     } else {
-      // Set first available category as default
-      if (categories.length > 0) {
-        setFormData({ ...defaultMenuItem, category: categories[0].id });
-      }
+      // Set initial category if provided, otherwise use first available category
+      const categoryId = initialCategoryId || (categories.length > 0 ? categories[0].id : '');
+      setFormData({ ...defaultMenuItem, category: categoryId });
     }
-  }, [item, categories]);
+  }, [item, initialCategoryId, categories]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -175,6 +176,8 @@ const EditMenuItem: React.FC<EditMenuItemProps> = ({
     }
   };
 
+  const selectedCategory = categories.find(cat => cat.id === formData.category);
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -186,6 +189,12 @@ const EditMenuItem: React.FC<EditMenuItemProps> = ({
             <p className="text-sm text-gray-600 mt-1">
               {item ? 'Modifique as informações do item' : 'Adicione um novo item ao cardápio'}
             </p>
+            {initialCategoryId && selectedCategory && (
+              <div className="mt-2 flex items-center text-xs text-amber-700 bg-amber-50 px-2 py-1 rounded">
+                <FolderOpen size={12} className="mr-1" />
+                Adicionando à categoria: {selectedCategory.name}
+              </div>
+            )}
           </div>
           <button 
             onClick={onCancel}

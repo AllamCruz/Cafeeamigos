@@ -15,6 +15,7 @@ interface SortableCategoryProps {
   onDelete: (id: string) => void;
   onEditItem: (item: MenuItem) => void;
   onDeleteItem: (id: string) => void;
+  onAddItemToCategory: (categoryId: string) => void;
   items: MenuItem[];
   subcategories: Category[];
   level?: number;
@@ -26,6 +27,7 @@ const SortableCategory: React.FC<SortableCategoryProps> = ({
   onDelete,
   onEditItem,
   onDeleteItem,
+  onAddItemToCategory,
   items,
   subcategories,
   level = 0
@@ -108,6 +110,13 @@ const SortableCategory: React.FC<SortableCategoryProps> = ({
         
         <div className="flex items-center space-x-2 ml-2">
           <button
+            onClick={() => onAddItemToCategory(category.id)}
+            className="p-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-md transition-colors"
+            title="Adicionar item nesta categoria"
+          >
+            <Plus size={16} />
+          </button>
+          <button
             onClick={() => onEdit(category)}
             className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors"
             title="Editar categoria"
@@ -135,6 +144,7 @@ const SortableCategory: React.FC<SortableCategoryProps> = ({
               onDelete={onDelete}
               onEditItem={onEditItem}
               onDeleteItem={onDeleteItem}
+              onAddItemToCategory={onAddItemToCategory}
               items={items.filter(item => item.category === subcategory.id)}
               subcategories={[]}
               level={level + 1}
@@ -145,11 +155,18 @@ const SortableCategory: React.FC<SortableCategoryProps> = ({
           {items.filter(item => item.category === category.id).length > 0 && (
             <div className="ml-6 mb-2">
               <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
-                <div className="bg-gray-50 px-4 py-2 border-b border-gray-200">
+                <div className="bg-gray-50 px-4 py-2 border-b border-gray-200 flex items-center justify-between">
                   <h4 className="text-sm font-medium text-gray-700 flex items-center">
                     <Package size={14} className="mr-2" />
                     Itens da categoria
                   </h4>
+                  <button
+                    onClick={() => onAddItemToCategory(category.id)}
+                    className="text-xs bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700 transition-colors flex items-center"
+                  >
+                    <Plus size={12} className="mr-1" />
+                    Adicionar Item
+                  </button>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200">
@@ -306,6 +323,7 @@ const AdminPanel: React.FC = () => {
   const navigate = useNavigate();
   const [editingItem, setEditingItem] = useState<MenuItem | undefined>(undefined);
   const [isAddingItem, setIsAddingItem] = useState(false);
+  const [initialCategoryId, setInitialCategoryId] = useState<string>('');
   const [showCategoryManager, setShowCategoryManager] = useState(false);
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -344,11 +362,13 @@ const AdminPanel: React.FC = () => {
 
   const handleEditItem = (item: MenuItem) => {
     setEditingItem(item);
+    setInitialCategoryId('');
     setIsAddingItem(true);
   };
 
-  const handleAddItem = () => {
+  const handleAddItemToCategory = (categoryId: string) => {
     setEditingItem(undefined);
+    setInitialCategoryId(categoryId);
     setIsAddingItem(true);
   };
 
@@ -460,7 +480,7 @@ const AdminPanel: React.FC = () => {
       </div>
 
       {/* Action Buttons */}
-      <div className="mb-8 flex flex-col sm:flex-row gap-4">
+      <div className="mb-8">
         <button
           onClick={() => setShowCategoryManager(true)}
           disabled={isLoading}
@@ -469,21 +489,15 @@ const AdminPanel: React.FC = () => {
           <FolderOpen size={18} />
           <span>Gerenciar Categorias</span>
         </button>
-        
-        <button
-          onClick={handleAddItem}
-          disabled={isLoading}
-          className="flex items-center justify-center space-x-2 px-4 py-3 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors disabled:opacity-50"
-        >
-          <Plus size={18} />
-          <span>Novo Item</span>
-        </button>
       </div>
 
       {/* Categories Overview */}
       <div className="mb-10">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-serif text-[#532b1b]">Estrutura do Cardápio</h2>
+          <div className="text-sm text-gray-500 bg-amber-50 px-3 py-1 rounded-full">
+            Use o botão <Plus size={12} className="inline mx-1" /> verde para adicionar itens diretamente às categorias
+          </div>
         </div>
         
         <DndContext
@@ -504,6 +518,7 @@ const AdminPanel: React.FC = () => {
                   onDelete={handleDeleteCategory}
                   onEditItem={handleEditItem}
                   onDeleteItem={handleDeleteItem}
+                  onAddItemToCategory={handleAddItemToCategory}
                   items={getMenuItemsByCategory(category.id, true)}
                   subcategories={getSubcategories(category.id)}
                 />
@@ -517,6 +532,7 @@ const AdminPanel: React.FC = () => {
       {isAddingItem && (
         <EditMenuItem
           item={editingItem}
+          initialCategoryId={initialCategoryId}
           onSave={handleSaveItem}
           onCancel={() => setIsAddingItem(false)}
         />
