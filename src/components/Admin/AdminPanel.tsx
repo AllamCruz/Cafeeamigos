@@ -10,28 +10,20 @@ import { CSS } from '@dnd-kit/utilities';
 
 interface SortableCategoryProps {
   category: Category;
-  level?: number;
   onEdit: (category: Category) => void;
   onDelete: (id: string) => void;
   onEditItem: (item: MenuItem) => void;
   onDeleteItem: (id: string) => void;
   items: MenuItem[];
-  subcategories: Category[];
-  getItemsByCategory: (categoryId: string) => MenuItem[];
-  getSubcategories: (categoryId: string) => Category[];
 }
 
 const SortableCategory: React.FC<SortableCategoryProps> = ({ 
   category, 
-  level = 0, 
   onEdit, 
   onDelete,
   onEditItem,
   onDeleteItem,
-  items,
-  subcategories,
-  getItemsByCategory,
-  getSubcategories
+  items
 }) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const {
@@ -46,8 +38,7 @@ const SortableCategory: React.FC<SortableCategoryProps> = ({
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    zIndex: isDragging ? 1 : 0,
-    marginLeft: `${level * 1.5}rem`
+    zIndex: isDragging ? 1 : 0
   };
 
   return (
@@ -60,7 +51,7 @@ const SortableCategory: React.FC<SortableCategoryProps> = ({
         }`}
       >
         <div className="flex items-center flex-1">
-          {(subcategories.length > 0 || items.length > 0) && (
+          {items.length > 0 && (
             <button
               onClick={() => setIsExpanded(!isExpanded)}
               className="p-1 text-gray-400 hover:text-gray-600 mr-1"
@@ -96,100 +87,78 @@ const SortableCategory: React.FC<SortableCategoryProps> = ({
         </div>
       </div>
 
-      {isExpanded && (
-        <>
-          {/* Display items in this category */}
-          {items.length > 0 && (
-            <div className="ml-6 mb-2">
-              <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Nome
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
-                        Descrição
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Preço Base
-                      </th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Ações
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {items.map((item) => (
-                      <tr key={item.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            {item.imageUrl && (
-                              <img 
-                                src={item.imageUrl} 
-                                alt={item.name} 
-                                className="h-10 w-10 rounded-full mr-3 object-cover"
-                              />
-                            )}
-                            <div className="text-sm font-medium text-gray-900 truncate max-w-[120px] sm:max-w-none">
-                              {item.name}
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-4 py-4 hidden md:table-cell">
-                          <div className="text-sm text-gray-500 truncate max-w-[200px] lg:max-w-[300px]">
-                            {item.description}
-                          </div>
-                        </td>
-                        <td className="px-4 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">
-                            {item.sizes && item.sizes.length > 0 
-                              ? `${item.sizes.length} tamanhos`
-                              : `R$ ${item.price.toFixed(2)}`
-                            }
-                          </div>
-                        </td>
-                        <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <div className="flex items-center justify-end space-x-2">
-                            <button
-                              onClick={() => onEditItem(item)}
-                              className="p-1.5 text-indigo-600 hover:text-indigo-900"
-                            >
-                              <Edit size={16} />
-                            </button>
-                            <button
-                              onClick={() => onDeleteItem(item.id)}
-                              className="p-1.5 text-red-600 hover:text-red-900"
-                            >
-                              <Trash size={16} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          {/* Render subcategories recursively */}
-          {subcategories.map(subcat => (
-            <SortableCategory
-              key={subcat.id}
-              category={subcat}
-              level={level + 1}
-              onEdit={onEdit}
-              onDelete={onDelete}
-              onEditItem={onEditItem}
-              onDeleteItem={onDeleteItem}
-              items={getItemsByCategory(subcat.id)}
-              subcategories={getSubcategories(subcat.id)}
-              getItemsByCategory={getItemsByCategory}
-              getSubcategories={getSubcategories}
-            />
-          ))}
-        </>
+      {isExpanded && items.length > 0 && (
+        <div className="ml-6 mb-2">
+          <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Nome
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
+                    Descrição
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Preço Base
+                  </th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Ações
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {items.map((item) => (
+                  <tr key={item.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        {item.imageUrl && (
+                          <img 
+                            src={item.imageUrl} 
+                            alt={item.name} 
+                            className="h-10 w-10 rounded-full mr-3 object-cover"
+                          />
+                        )}
+                        <div className="text-sm font-medium text-gray-900 truncate max-w-[120px] sm:max-w-none">
+                          {item.name}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-4 hidden md:table-cell">
+                      <div className="text-sm text-gray-500 truncate max-w-[200px] lg:max-w-[300px]">
+                        {item.description}
+                      </div>
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">
+                        {item.sizes && item.sizes.length > 0 
+                          ? `${item.sizes.length} tamanhos`
+                          : `R$ ${item.price.toFixed(2)}`
+                        }
+                      </div>
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <div className="flex items-center justify-end space-x-2">
+                        <button
+                          onClick={() => onEditItem(item)}
+                          className="p-1.5 text-indigo-600 hover:text-indigo-900"
+                        >
+                          <Edit size={16} />
+                        </button>
+                        <button
+                          onClick={() => onDeleteItem(item.id)}
+                          className="p-1.5 text-red-600 hover:text-red-900"
+                        >
+                          <Trash size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       )}
     </>
   );
@@ -203,10 +172,7 @@ interface NotificationProps {
 
 const Notification: React.FC<NotificationProps> = ({ type, message, onClose }) => {
   React.useEffect(() => {
-    const timer = setTimeout(() => {
-      onClose();
-    }, 5000);
-
+    const timer = setTimeout(onClose, 5000);
     return () => clearTimeout(timer);
   }, [onClose]);
 
@@ -237,7 +203,6 @@ const AdminPanel: React.FC = () => {
     menuItems,
     categories,
     getParentCategories,
-    getSubcategories,
     getMenuItemsByCategory,
     addMenuItem,
     updateMenuItem,
@@ -253,7 +218,7 @@ const AdminPanel: React.FC = () => {
   const [isAddingItem, setIsAddingItem] = useState(false);
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
-  const [editingCategory, setEditingCategory] = useState<{ id: string, name: string, parentCategoryId?: string | null } | null>(null);
+  const [editingCategory, setEditingCategory] = useState<{ id: string, name: string } | null>(null);
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -313,7 +278,7 @@ const AdminPanel: React.FC = () => {
     } catch (error) {
       console.error('Error saving item:', error);
       showNotification('error', 'Erro ao salvar item. Tente novamente.');
-      throw error; // Re-throw to let EditMenuItem handle it
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -357,8 +322,7 @@ const AdminPanel: React.FC = () => {
   const handleEditCategory = (category: Category) => {
     setEditingCategory({ 
       id: category.id, 
-      name: category.name,
-      parentCategoryId: category.parentCategoryId
+      name: category.name
     });
   };
 
@@ -369,7 +333,7 @@ const AdminPanel: React.FC = () => {
         await updateCategory({ 
           id: editingCategory.id, 
           name: editingCategory.name.trim(),
-          parentCategoryId: editingCategory.parentCategoryId
+          parentCategoryId: null
         });
         setEditingCategory(null);
         showNotification('success', 'Categoria atualizada com sucesso!');
@@ -520,9 +484,6 @@ const AdminPanel: React.FC = () => {
                   onEditItem={handleEditItem}
                   onDeleteItem={handleDeleteItem}
                   items={getItemsByCategory(category.id)}
-                  subcategories={getSubcategories(category.id)}
-                  getItemsByCategory={getItemsByCategory}
-                  getSubcategories={getSubcategories}
                 />
               ))}
             </div>

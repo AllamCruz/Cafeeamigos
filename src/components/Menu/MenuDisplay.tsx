@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import MenuCategory from './MenuCategory';
 import { useMenu } from '../../hooks/useMenu';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const MenuDisplay: React.FC = () => {
-  const { categories, getMenuItemsByCategory, getAllCategories, getCategoryName } = useMenu();
+  const { categories, getMenuItemsByCategory, getAllCategories } = useMenu();
   const [selectedCategory, setSelectedCategory] = useState<string>('');
-  const containerRef = React.useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const allCategories = getAllCategories();
 
   useEffect(() => {
@@ -38,12 +38,21 @@ const MenuDisplay: React.FC = () => {
     );
   };
 
+  if (allCategories.length === 0) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-16 text-center">
+        <p className="text-gray-500 text-lg">Carregando cardápio...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="relative mb-8">
         <button 
           onClick={() => scrollCategories('left')}
           className="absolute left-0 top-1/2 -translate-y-1/2 -ml-4 bg-white/90 hover:bg-white rounded-full p-1.5 shadow-md z-10 text-amber-800"
+          aria-label="Scroll left"
         >
           <ChevronLeft size={20} />
         </button>
@@ -71,6 +80,7 @@ const MenuDisplay: React.FC = () => {
         <button 
           onClick={() => scrollCategories('right')}
           className="absolute right-0 top-1/2 -translate-y-1/2 -mr-4 bg-white/90 hover:bg-white rounded-full p-1.5 shadow-md z-10 text-amber-800"
+          aria-label="Scroll right"
         >
           <ChevronRight size={20} />
         </button>
@@ -81,4 +91,4 @@ const MenuDisplay: React.FC = () => {
   );
 };
 
-export default MenuDisplay
+export default MenuDisplay;

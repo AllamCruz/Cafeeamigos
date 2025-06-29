@@ -2,9 +2,11 @@ import React from 'react';
 import { Coffee, Lock } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
+import { useWelcome } from '../../hooks/useWelcome';
 
 const Header: React.FC = () => {
   const { isAuthenticated, logout } = useAuth();
+  const { resetWelcome } = useWelcome();
   const navigate = useNavigate();
 
   const handleAdminClick = () => {
@@ -16,16 +18,23 @@ const Header: React.FC = () => {
     navigate('/');
   };
 
+  const handleLogoClick = () => {
+    resetWelcome();
+  };
+
   return (
     <header className="bg-[#5c3d2e] text-amber-50 p-6 relative">
       <div className="max-w-7xl mx-auto flex justify-between items-center">
-        <div className="flex items-center space-x-3">
+        <button 
+          onClick={handleLogoClick}
+          className="flex items-center space-x-3 hover:opacity-80 transition-opacity"
+        >
           <Coffee className="h-8 w-8 text-amber-200" />
           <div>
             <h1 className="text-2xl md:text-3xl font-serif italic">Café & Amigos</h1>
             <p className="text-sm md:text-base font-light tracking-wider">Bistrô Bar</p>
           </div>
-        </div>
+        </button>
         
         <div className="flex items-center space-x-4">
           {isAuthenticated && (

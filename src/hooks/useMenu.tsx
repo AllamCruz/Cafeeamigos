@@ -40,15 +40,8 @@ export const useMenu = () => {
     }
   };
 
-  const getMenuItemsByCategory = (categoryId: string, includeSubcategories: boolean = true): MenuItem[] => {
-    if (!includeSubcategories) {
-      return menuItems.filter(item => item.category === categoryId);
-    }
-
-    const subcategoryIds = getSubcategories(categoryId).map(cat => cat.id);
-    return menuItems.filter(item => 
-      item.category === categoryId || subcategoryIds.includes(item.category)
-    );
+  const getMenuItemsByCategory = (categoryId: string): MenuItem[] => {
+    return menuItems.filter(item => item.category === categoryId);
   };
 
   const getCategoryById = (categoryId: string): Category | undefined => {
@@ -61,10 +54,6 @@ export const useMenu = () => {
 
   const getParentCategories = (): Category[] => {
     return categories.filter(category => !category.parentCategoryId);
-  };
-
-  const getSubcategories = (parentId: string): Category[] => {
-    return categories.filter(category => category.parentCategoryId === parentId);
   };
 
   const getCategoryName = (categoryId: string): string => {
@@ -134,7 +123,6 @@ export const useMenu = () => {
     try {
       await deleteCategory(id);
       setCategories(prevCategories => prevCategories.filter(category => category.id !== id));
-      // Also remove menu items that belonged to this category
       setMenuItems(prevItems => prevItems.filter(item => item.category !== id));
     } catch (err) {
       setError('Failed to delete category');
@@ -161,7 +149,6 @@ export const useMenu = () => {
     getCategoryById,
     getAllCategories,
     getParentCategories,
-    getSubcategories,
     getCategoryName,
     addMenuItem: handleAddMenuItem,
     updateMenuItem: handleUpdateMenuItem,
