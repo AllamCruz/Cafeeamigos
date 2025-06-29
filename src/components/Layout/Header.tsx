@@ -23,7 +23,7 @@ const Header: React.FC = () => {
   };
 
   return (
-    <header className="bg-[#5c3d2e] text-amber-50 p-6 relative">
+    <header className="bg-[#4a2c1a] text-amber-50 p-6 relative">
       <div className="max-w-7xl mx-auto flex justify-between items-center">
         <button 
           onClick={handleLogoClick}
