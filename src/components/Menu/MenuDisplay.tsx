@@ -41,7 +41,7 @@ const MenuDisplay: React.FC = () => {
   if (allCategories.length === 0) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-16 text-center">
-        <p className="text-amber-100 text-lg">Carregando cardápio...</p>
+        <p className="text-gray-500 text-lg">Carregando cardápio...</p>
       </div>
     );
   }
@@ -68,7 +68,7 @@ const MenuDisplay: React.FC = () => {
               onClick={() => setSelectedCategory(category.id)}
               className={`px-6 py-2 rounded-full whitespace-nowrap transition-colors ${
                 selectedCategory === category.id
-                  ? 'bg-amber-600 text-white'
+                  ? 'bg-[#5c3d2e] text-white'
                   : 'bg-amber-100 text-amber-900 hover:bg-amber-200'
               }`}
             >
