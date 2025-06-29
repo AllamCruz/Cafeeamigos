@@ -16,7 +16,7 @@ const AppContent: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#4a2c1a] flex flex-col">
+    <div className="min-h-screen bg-[#fcf8f3] flex flex-col">
       <Header />
       <main className="flex-grow">
         <Routes>
