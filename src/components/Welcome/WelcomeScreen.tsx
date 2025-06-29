@@ -50,7 +50,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onEnter }) => {
             <Clock className="h-5 w-5 text-amber-200" />
             <div className="text-left text-amber-50">
               <p className="text-sm font-medium">Horário de Funcionamento</p>
-              <p className="text-xs text-amber-100">Seg-Dom: 11h às 15h e 18h às 23h</p>
+              <p className="text-xs text-amber-100">Ter-Dom: 11h às 15h e 18h às 23h</p>
             </div>
           </div>
           
