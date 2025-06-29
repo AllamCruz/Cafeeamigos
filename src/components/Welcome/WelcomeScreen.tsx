@@ -13,7 +13,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onEnter }) => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#5c3d2e] via-[#6b4423] to-[#5c3d2e] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-[#6b4423] via-[#7a4d28] to-[#6b4423] flex items-center justify-center p-4">
       <div className={`max-w-md w-full text-center transition-all duration-1000 ${
         isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
       }`}>
