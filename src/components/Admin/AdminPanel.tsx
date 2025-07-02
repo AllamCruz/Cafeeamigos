@@ -3,7 +3,8 @@ import { useMenu } from '../../hooks/useMenu';
 import { MenuItem, Category } from '../../types';
 import EditMenuItem from './EditMenuItem';
 import CategoryManager from './CategoryManager';
-import { Edit, Trash, Plus, ArrowLeft, GripVertical, ChevronRight, ChevronDown, AlertCircle, CheckCircle, X, FolderOpen, Folder, Package } from 'lucide-react';
+import WaiterManager from './WaiterManager';
+import { Edit, Trash, Plus, ArrowLeft, GripVertical, ChevronRight, ChevronDown, AlertCircle, CheckCircle, X, FolderOpen, Folder, Package, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
@@ -32,7 +33,7 @@ const SortableCategory: React.FC<SortableCategoryProps> = ({
   subcategories,
   level = 0
 }) => {
-  const [isExpanded, setIsExpanded] = useState(false); // Changed to false by default
+  const [isExpanded, setIsExpanded] = useState(false);
   const {
     attributes,
     listeners,
@@ -325,6 +326,7 @@ const AdminPanel: React.FC = () => {
   const [isAddingItem, setIsAddingItem] = useState(false);
   const [initialCategoryId, setInitialCategoryId] = useState<string>('');
   const [showCategoryManager, setShowCategoryManager] = useState(false);
+  const [showWaiterManager, setShowWaiterManager] = useState(false);
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -457,7 +459,7 @@ const AdminPanel: React.FC = () => {
         <div>
           <h1 className="text-3xl font-serif text-[#532b1b] mb-2">Painel Administrativo</h1>
           <p className="text-gray-600">
-            Gerencie categorias, subcategorias e itens do cardápio de forma profissional.
+            Gerencie categorias, subcategorias, itens do cardápio e garçons de forma profissional.
           </p>
           <div className="mt-2 flex items-center space-x-4 text-sm text-gray-500">
             <span className="flex items-center">
@@ -480,7 +482,7 @@ const AdminPanel: React.FC = () => {
       </div>
 
       {/* Action Buttons */}
-      <div className="mb-8">
+      <div className="mb-8 flex flex-col sm:flex-row gap-4">
         <button
           onClick={() => setShowCategoryManager(true)}
           disabled={isLoading}
@@ -488,6 +490,15 @@ const AdminPanel: React.FC = () => {
         >
           <FolderOpen size={18} />
           <span>Gerenciar Categorias</span>
+        </button>
+        
+        <button
+          onClick={() => setShowWaiterManager(true)}
+          disabled={isLoading}
+          className="flex items-center justify-center space-x-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+        >
+          <Users size={18} />
+          <span>Gerenciar Garçons</span>
         </button>
       </div>
 
@@ -542,6 +553,14 @@ const AdminPanel: React.FC = () => {
       {showCategoryManager && (
         <CategoryManager
           onClose={() => setShowCategoryManager(false)}
+          onSuccess={(message) => showNotification('success', message)}
+          onError={(message) => showNotification('error', message)}
+        />
+      )}
+
+      {showWaiterManager && (
+        <WaiterManager
+          onClose={() => setShowWaiterManager(false)}
           onSuccess={(message) => showNotification('success', message)}
           onError={(message) => showNotification('error', message)}
         />

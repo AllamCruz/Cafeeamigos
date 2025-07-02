@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { MenuItem, Category, Order, OrderItem, OrderWithItems, CartItem } from '../types';
+import { MenuItem, Category, Order, OrderItem, OrderWithItems, CartItem, Profile } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 
 export const uploadImage = async (file: File): Promise<string> => {
@@ -280,18 +280,145 @@ export const reorderCategories = async (categories: Category[]): Promise<void> =
   }
 };
 
-export const authenticateUser = async (email: string, password: string): Promise<boolean> => {
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password
-  });
+// User Profile Management Functions
+
+export const getUserProfile = async (userId: string): Promise<Profile | null> => {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', userId)
+    .single();
 
   if (error) {
-    console.error('Error authenticating:', error);
-    return false;
+    console.error('Error fetching user profile:', error);
+    return null;
   }
 
-  return !!data.user;
+  return {
+    id: data.id,
+    name: data.name,
+    role: data.role,
+    createdAt: data.created_at,
+    updatedAt: data.updated_at
+  };
+};
+
+export const getAllWaiters = async (): Promise<Profile[]> => {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('role', 'waiter')
+    .order('name');
+
+  if (error) {
+    console.error('Error fetching waiters:', error);
+    return [];
+  }
+
+  return data.map(profile => ({
+    id: profile.id,
+    name: profile.name,
+    role: profile.role,
+    createdAt: profile.created_at,
+    updatedAt: profile.updated_at
+  }));
+};
+
+export const getAllProfiles = async (): Promise<Profile[]> => {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .order('name');
+
+  if (error) {
+    console.error('Error fetching profiles:', error);
+    return [];
+  }
+
+  return data.map(profile => ({
+    id: profile.id,
+    name: profile.name,
+    role: profile.role,
+    createdAt: profile.created_at,
+    updatedAt: profile.updated_at
+  }));
+};
+
+export const createWaiter = async (waiterData: {
+  name: string;
+  email: string;
+  password: string;
+}): Promise<Profile> => {
+  // Create user in auth
+  const { data: authData, error: authError } = await supabase.auth.signUp({
+    email: waiterData.email,
+    password: waiterData.password,
+    options: {
+      data: {
+        name: waiterData.name,
+        role: 'waiter'
+      }
+    }
+  });
+
+  if (authError) {
+    console.error('Error creating waiter auth:', authError);
+    throw authError;
+  }
+
+  if (!authData.user) {
+    throw new Error('Failed to create user');
+  }
+
+  // The profile will be created automatically by the trigger
+  // Wait a moment and then fetch the profile
+  await new Promise(resolve => setTimeout(resolve, 1000));
+
+  const profile = await getUserProfile(authData.user.id);
+  if (!profile) {
+    throw new Error('Failed to create waiter profile');
+  }
+
+  return profile;
+};
+
+export const updateProfile = async (profileData: {
+  id: string;
+  name: string;
+  role: 'admin' | 'waiter';
+}): Promise<Profile> => {
+  const { data, error } = await supabase
+    .from('profiles')
+    .update({
+      name: profileData.name,
+      role: profileData.role
+    })
+    .eq('id', profileData.id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating profile:', error);
+    throw error;
+  }
+
+  return {
+    id: data.id,
+    name: data.name,
+    role: data.role,
+    createdAt: data.created_at,
+    updatedAt: data.updated_at
+  };
+};
+
+export const deleteWaiter = async (waiterId: string): Promise<void> => {
+  // Delete from auth.users (this will cascade to profiles)
+  const { error } = await supabase.auth.admin.deleteUser(waiterId);
+
+  if (error) {
+    console.error('Error deleting waiter:', error);
+    throw error;
+  }
 };
 
 // Order Management Functions

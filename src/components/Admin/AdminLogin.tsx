@@ -1,30 +1,40 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
-import { LockKeyhole, User, ArrowLeft } from 'lucide-react';
+import { LockKeyhole, User, ArrowLeft, Mail } from 'lucide-react';
 
 const AdminLogin: React.FC = () => {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setIsLoading(true);
     
-    if (!username || !password) {
+    if (!email || !password) {
       setError('Por favor, preencha todos os campos');
+      setIsLoading(false);
       return;
     }
     
-    const isSuccessful = login(username, password);
-    
-    if (isSuccessful) {
-      navigate('/admin/panel');
-    } else {
-      setError('Usuário ou senha incorretos');
+    try {
+      const isSuccessful = await login(email, password);
+      
+      if (isSuccessful) {
+        // Navigation will be handled by the auth state change in App.tsx
+      } else {
+        setError('Email ou senha incorretos');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      setError('Erro ao fazer login. Tente novamente.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -32,30 +42,31 @@ const AdminLogin: React.FC = () => {
     <div className="min-h-[calc(100vh-300px)] flex items-center justify-center py-12 px-4">
       <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 border border-amber-100">
         <div className="text-center mb-8">
-          <h2 className="text-2xl font-serif text-[#5c3d2e]">Acesso Administrativo</h2>
-          <p className="text-gray-600 mt-2 text-sm">Entre com suas credenciais para acessar o painel</p>
+          <h2 className="text-2xl font-serif text-[#5c3d2e]">Acesso ao Sistema</h2>
+          <p className="text-gray-600 mt-2 text-sm">Entre com suas credenciais para acessar o sistema</p>
         </div>
         
         {error && (
-          <div className="mb-4 p-2 bg-red-100 text-red-700 text-sm rounded">
+          <div className="mb-4 p-3 bg-red-100 text-red-700 text-sm rounded border border-red-200">
             {error}
           </div>
         )}
         
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label htmlFor="username" className="block text-gray-700 text-sm font-medium mb-1">
-              Usuário
+            <label htmlFor="email" className="block text-gray-700 text-sm font-medium mb-1">
+              Email
             </label>
             <div className="relative">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
               <input
-                id="username"
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="pl-10 w-full p-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                placeholder="Seu nome de usuário"
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={isLoading}
+                className="pl-10 w-full p-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent disabled:bg-gray-100"
+                placeholder="seu@email.com"
               />
             </div>
           </div>
@@ -71,7 +82,8 @@ const AdminLogin: React.FC = () => {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="pl-10 w-full p-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                disabled={isLoading}
+                className="pl-10 w-full p-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent disabled:bg-gray-100"
                 placeholder="Sua senha"
               />
             </div>
@@ -79,15 +91,24 @@ const AdminLogin: React.FC = () => {
           
           <button
             type="submit"
-            className="w-full bg-[#5c3d2e] text-white py-2.5 rounded-md hover:bg-amber-800 transition-colors font-medium mb-4"
+            disabled={isLoading}
+            className="w-full bg-[#5c3d2e] text-white py-2.5 rounded-md hover:bg-amber-800 transition-colors font-medium mb-4 disabled:opacity-50 flex items-center justify-center"
           >
-            Entrar
+            {isLoading ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                Entrando...
+              </>
+            ) : (
+              'Entrar'
+            )}
           </button>
           
           <button
             type="button"
             onClick={() => navigate('/')}
-            className="w-full flex items-center justify-center space-x-2 py-2.5 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors text-gray-700"
+            disabled={isLoading}
+            className="w-full flex items-center justify-center space-x-2 py-2.5 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors text-gray-700 disabled:opacity-50"
           >
             <ArrowLeft size={16} />
             <span>Voltar ao Cardápio</span>
@@ -95,7 +116,7 @@ const AdminLogin: React.FC = () => {
           
           <div className="mt-4 text-center">
             <p className="text-xs text-gray-500">
-              Caso de erro entre em <a href= "https://wa.me/+55(88)981344755" class="text-blue-600 underline">contato com suporte</a>
+              Caso tenha problemas, entre em <a href="https://wa.me/+55(88)981344755" className="text-blue-600 underline">contato com suporte</a>
             </p>
           </div>
         </form>

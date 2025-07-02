@@ -23,6 +23,14 @@ export interface User {
   password: string;
 }
 
+export interface Profile {
+  id: string;
+  name: string;
+  role: 'admin' | 'waiter';
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Order {
   id: string;
   tableNumber: string;

@@ -143,6 +143,29 @@ export interface Database {
           updated_at?: string
         }
       }
+      profiles: {
+        Row: {
+          id: string
+          name: string
+          role: 'admin' | 'waiter'
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          name: string
+          role?: 'admin' | 'waiter'
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          role?: 'admin' | 'waiter'
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
     storage: {
       Buckets: {
