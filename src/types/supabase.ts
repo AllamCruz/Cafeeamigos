@@ -76,6 +76,73 @@ export interface Database {
           updated_at?: string
         }
       }
+      orders: {
+        Row: {
+          id: string
+          table_number: string
+          waiter_name: string
+          status: 'pending' | 'preparing' | 'ready' | 'delivered' | 'cancelled'
+          total_amount: number | null
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          table_number: string
+          waiter_name: string
+          status?: 'pending' | 'preparing' | 'ready' | 'delivered' | 'cancelled'
+          total_amount?: number | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          table_number?: string
+          waiter_name?: string
+          status?: 'pending' | 'preparing' | 'ready' | 'delivered' | 'cancelled'
+          total_amount?: number | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      order_items: {
+        Row: {
+          id: string
+          order_id: string
+          menu_item_id: string
+          quantity: number
+          price_at_order: number
+          size_selected: string | null
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          order_id: string
+          menu_item_id: string
+          quantity?: number
+          price_at_order: number
+          size_selected?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          order_id?: string
+          menu_item_id?: string
+          quantity?: number
+          price_at_order?: number
+          size_selected?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
     storage: {
       Buckets: {
