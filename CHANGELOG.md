@@ -1,5 +1,52 @@
 # Changelog - Otimizações e Melhorias
 
+## Limpeza Completa do Código - Janeiro 2025
+
+### 🧹 Remoção de Funcionalidades Não Utilizadas
+
+#### Sistema de Pedidos Removido
+- **storage.ts**: Removidas todas as funções relacionadas ao gerenciamento de pedidos:
+  - `addOrder`, `addOrderItems`, `createOrderWithItems`
+  - `updateOrderStatus`, `updateOrderTotalAmount`
+  - `getOrders`, `getOrderDetails`, `deleteOrder`
+  - `getOrdersByStatus`, `getOrdersCount`
+- **types/index.ts**: Removidos tipos não utilizados:
+  - `Order`, `OrderItem`, `OrderWithItems`, `CartItem`
+  - `OrderStatus`, `ORDER_STATUS_LABELS`, `ORDER_STATUS_COLORS`
+- **types/supabase.ts**: Removidas definições das tabelas `orders` e `order_items`
+
+#### Interface do Garçom Simplificada
+- **Waiter.tsx**: Removidas referências a funcionalidades de pedidos não implementadas
+  - Simplificado o texto da interface
+  - Removida lista de "funcionalidades em desenvolvimento"
+  - Foco apenas no perfil do garçom
+
+### 🔧 Benefícios da Limpeza
+
+#### Redução Significativa do Código
+- **-400 linhas** de código desnecessário removidas
+- **-8 funções** não utilizadas eliminadas
+- **-6 tipos/interfaces** redundantes removidos
+
+#### Melhor Manutenibilidade
+- Código mais focado no que realmente é usado
+- Menos complexidade desnecessária
+- Estrutura mais limpa e organizada
+
+#### Performance Melhorada
+- Bundle menor devido à remoção de código morto
+- Menos imports desnecessários
+- Tipagem mais enxuta
+
+### 📊 Resumo das Remoções
+
+| Categoria | Itens Removidos | Linhas Economizadas |
+|-----------|----------------|-------------------|
+| Funções de Storage | 9 funções | ~250 linhas |
+| Tipos/Interfaces | 6 tipos | ~80 linhas |
+| Definições Supabase | 2 tabelas | ~70 linhas |
+| **Total** | **17 itens** | **~400 linhas** |
+
 ## Refatoramento e Limpeza de Código - Janeiro 2025
 
 ### 🔧 Melhorias Técnicas e Limpeza
