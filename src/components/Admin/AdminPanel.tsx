@@ -17,8 +17,8 @@ interface SortableCategoryProps {
   onEditItem: (item: MenuItem) => void;
   onDeleteItem: (id: string) => void;
   onAddItemToCategory: (categoryId: string) => void;
-  items: MenuItem[];
-  subcategories: Category[];
+  directItems: MenuItem[];
+  directSubcategories: Category[];
   level?: number;
 }
 
@@ -29,8 +29,8 @@ const SortableCategory: React.FC<SortableCategoryProps> = ({
   onEditItem,
   onDeleteItem,
   onAddItemToCategory,
-  items,
-  subcategories,
+  directItems,
+  directSubcategories,
   level = 0
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -49,7 +49,7 @@ const SortableCategory: React.FC<SortableCategoryProps> = ({
     zIndex: isDragging ? 1 : 0
   };
 
-  const hasContent = items.length > 0 || subcategories.length > 0;
+  const hasContent = directItems.length > 0 || directSubcategories.length > 0;
   const indentClass = level > 0 ? `ml-${level * 6}` : '';
 
   return (
@@ -94,16 +94,16 @@ const SortableCategory: React.FC<SortableCategoryProps> = ({
           </div>
           
           <div className="ml-4 flex items-center space-x-2">
-            {subcategories.length > 0 && (
+            {directSubcategories.length > 0 && (
               <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full flex items-center">
                 <Folder size={12} className="mr-1" />
-                {subcategories.length} sub
+                {directSubcategories.length} sub
               </span>
             )}
-            {items.length > 0 && (
+            {directItems.length > 0 && (
               <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full flex items-center">
                 <Package size={12} className="mr-1" />
-                {items.length} {items.length === 1 ? 'item' : 'itens'}
+                {directItems.length} {directItems.length === 1 ? 'item' : 'itens'}
               </span>
             )}
           </div>
@@ -136,8 +136,8 @@ const SortableCategory: React.FC<SortableCategoryProps> = ({
 
       {isExpanded && hasContent && (
         <div className={`mb-4 ${indentClass}`}>
-          {/* Render subcategories first */}
-          {subcategories.map((subcategory) => (
+          {/* Render direct subcategories first */}
+          {directSubcategories.map((subcategory) => (
             <SortableCategory
               key={subcategory.id}
               category={subcategory}
@@ -146,14 +146,14 @@ const SortableCategory: React.FC<SortableCategoryProps> = ({
               onEditItem={onEditItem}
               onDeleteItem={onDeleteItem}
               onAddItemToCategory={onAddItemToCategory}
-              items={items.filter(item => item.category === subcategory.id)}
-              subcategories={[]}
+              directItems={getMenuItemsByCategory(subcategory.id, false)}
+              directSubcategories={getSubcategories(subcategory.id)}
               level={level + 1}
             />
           ))}
           
-          {/* Render items */}
-          {items.filter(item => item.category === category.id).length > 0 && (
+          {/* Render direct items */}
+          {directItems.length > 0 && (
             <div className="ml-6 mb-2">
               <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
                 <div className="bg-gray-50 px-4 py-2 border-b border-gray-200 flex items-center justify-between">
@@ -191,7 +191,7 @@ const SortableCategory: React.FC<SortableCategoryProps> = ({
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {items.filter(item => item.category === category.id).map((item) => (
+                      {directItems.map((item) => (
                         <tr key={item.id} className="hover:bg-gray-50">
                           <td className="px-4 py-4 whitespace-nowrap">
                             <div className="flex items-center">
@@ -415,13 +415,13 @@ const AdminPanel: React.FC = () => {
 
   const handleDeleteCategory = async (id: string) => {
     const category = categories.find(c => c.id === id);
-    const subcategories = getSubcategories(id);
+    const directSubcategories = getSubcategories(id);
     const items = getMenuItemsByCategory(id, true);
     
     let confirmMessage = `Tem certeza que deseja excluir a categoria "${category?.name}"?`;
     
-    if (subcategories.length > 0) {
-      confirmMessage += `\n\nEsta ação também excluirá ${subcategories.length} subcategoria(s).`;
+    if (directSubcategories.length > 0) {
+      confirmMessage += `\n\nEsta ação também excluirá ${directSubcategories.length} subcategoria(s).`;
     }
     
     if (items.length > 0) {
@@ -531,8 +531,8 @@ const AdminPanel: React.FC = () => {
                   onEditItem={handleEditItem}
                   onDeleteItem={handleDeleteItem}
                   onAddItemToCategory={handleAddItemToCategory}
-                  items={getMenuItemsByCategory(category.id, true)}
-                  subcategories={getSubcategories(category.id)}
+                  directItems={getMenuItemsByCategory(category.id, false)}
+                  directSubcategories={getSubcategories(category.id)}
                 />
               ))}
             </div>

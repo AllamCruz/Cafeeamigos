@@ -370,8 +370,10 @@ export const createWaiter = async (waiterData: {
     throw new Error('Failed to create user');
   }
 
-  // The profile will be created automatically by the trigger
-  // Wait a moment and then fetch the profile
+  // The profile will be created automatically by the database trigger
+  // We use setTimeout as a workaround to ensure the trigger has time to execute
+  // In a production environment, consider implementing a more robust polling mechanism
+  // or using real-time subscriptions to detect when the profile is created
   await new Promise(resolve => setTimeout(resolve, 1000));
 
   const profile = await getUserProfile(authData.user.id);

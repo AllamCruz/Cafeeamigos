@@ -34,21 +34,13 @@ const AppContent: React.FC = () => {
           <Route 
             path="/admin/*" 
             element={
-              isAuthenticated && isAdmin() ? (
-                <Admin />
-              ) : (
-                <Admin />
-              )
+              <Admin />
             } 
           />
           <Route 
             path="/waiter" 
             element={
-              isAuthenticated && isWaiter() ? (
-                <Waiter />
-              ) : (
-                <Navigate to="/admin" />
-              )
+              <Waiter />
             } 
           />
         </Routes>

@@ -1,5 +1,35 @@
 # Changelog - Otimizações e Melhorias
 
+## Refatoramento e Limpeza de Código - Janeiro 2025
+
+### 🔧 Melhorias Técnicas e Limpeza
+
+#### Simplificação da Lógica de Roteamento
+- **App.tsx**: Removida lógica redundante de autenticação nas rotas
+  - As rotas `/admin/*` e `/waiter` agora renderizam diretamente seus componentes
+  - A lógica de autenticação e autorização foi centralizada nos próprios componentes de página
+  - Isso torna o código mais limpo e reduz duplicação de lógica
+
+#### Refatoração do Componente SortableCategory
+- **AdminPanel.tsx**: Melhorada a passagem de props para o componente `SortableCategory`
+  - Renomeadas as props `items` e `subcategories` para `directItems` e `directSubcategories`
+  - Cada instância do componente agora recebe apenas seus filhos diretos
+  - Removida lógica de filtragem desnecessária dentro do componente
+  - Melhorada a clareza e manutenibilidade do código
+
+#### Documentação Melhorada
+- **storage.ts**: Adicionado comentário explicativo sobre o uso do `setTimeout` no método `createWaiter`
+  - Documenta que é um workaround para aguardar a execução do trigger do Supabase
+  - Sugere alternativas mais robustas para ambientes de produção
+
+### 📈 Benefícios das Alterações
+1. **Código mais limpo e organizado**
+2. **Melhor separação de responsabilidades**
+3. **Redução de duplicação de código**
+4. **Melhor documentação de workarounds temporários**
+5. **Componentes mais autocontidos e reutilizáveis**
+6. **Lógica de roteamento simplificada**
+
 ## Alterações Realizadas
 
 ### 🎉 Nova Funcionalidade
